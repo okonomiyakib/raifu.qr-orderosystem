@@ -4,7 +4,8 @@ import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { db } from "@/lib/firebase";
 import { doc, getDoc } from "firebase/firestore";
-import { MenuItem } from "@/lib/types";
+import { MenuItem, TaxSettings } from "@/lib/types";
+import { DEFAULT_TAX_SETTINGS } from "@/lib/tax";
 import { useCartStore } from "@/lib/store";
 import { MenuCard } from "@/components/customer/MenuCard";
 import { Cart } from "@/components/customer/Cart";
@@ -18,6 +19,7 @@ export default function MenuPage() {
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>("すべて");
+  const [taxSettings, setTaxSettings] = useState<TaxSettings>(DEFAULT_TAX_SETTINGS);
   const [loading, setLoading] = useState(true);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -25,23 +27,30 @@ export default function MenuPage() {
 
   const loadData = useCallback(async () => {
     try {
-      // テーブル情報取得
       const tableDoc = await getDoc(doc(db, "tables", tableId));
       if (!tableDoc.exists()) {
         toast.error("テーブルが見つかりません");
         setLoading(false);
         return;
       }
-      const data = tableDoc.data();
-      setTable(tableId, data.tableNumber);
-      setTableNumberState(data.tableNumber);
+      const tableData = tableDoc.data();
+      setTable(tableId, tableData.tableNumber);
+      setTableNumberState(tableData.tableNumber);
 
-      // メニュー取得
-      const res = await fetch("/api/menu");
-      const menuData: MenuItem[] = await res.json();
+      const [menuRes, settingsRes] = await Promise.all([
+        fetch("/api/menu"),
+        fetch("/api/settings"),
+      ]);
+      const menuData: MenuItem[] = await menuRes.json();
+      const settingsData = await settingsRes.json();
+
       setMenuItems(menuData);
+      setTaxSettings(settingsData.tax ?? DEFAULT_TAX_SETTINGS);
 
-      const cats = ["すべて", ...Array.from(new Set(menuData.map((i) => i.category)))];
+      const cats = [
+        "すべて",
+        ...(settingsData.categories as string[] ?? Array.from(new Set(menuData.map((i) => i.category)))),
+      ];
       setCategories(cats);
     } catch {
       toast.error("データの読み込みに失敗しました");
@@ -50,16 +59,11 @@ export default function MenuPage() {
     }
   }, [tableId, setTable]);
 
-  useEffect(() => {
-    loadData();
-  }, [loadData]);
+  useEffect(() => { loadData(); }, [loadData]);
 
-  const filteredItems =
-    activeCategory === "すべて"
-      ? menuItems
-      : menuItems.filter((i) => i.category === activeCategory);
-
-  const handleCheckout = () => setShowConfirm(true);
+  const filteredItems = activeCategory === "すべて"
+    ? menuItems
+    : menuItems.filter((i) => i.category === activeCategory);
 
   const handleConfirmOrder = async (notes: string) => {
     setIsSubmitting(true);
@@ -69,9 +73,7 @@ export default function MenuPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ tableId, tableNumber, items, notes }),
       });
-
-      if (!res.ok) throw new Error("注文失敗");
-
+      if (!res.ok) throw new Error();
       clearCart();
       router.push("/order-complete");
     } catch {
@@ -94,30 +96,24 @@ export default function MenuPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 pb-36">
-      {/* ヘッダー */}
       <header className="sticky top-0 z-40 bg-white shadow-sm">
         <div className="max-w-lg mx-auto px-4 py-4 flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold text-gray-800">メニュー</h1>
             {tableNumber && (
-              <p className="text-sm text-orange-500 font-medium">
-                テーブル {tableNumber}
-              </p>
+              <p className="text-sm text-orange-500 font-medium">テーブル {tableNumber}</p>
             )}
           </div>
           <div className="text-3xl">🍽️</div>
         </div>
 
-        {/* カテゴリタブ */}
         <div className="flex gap-2 px-4 pb-3 overflow-x-auto">
           {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
               className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                activeCategory === cat
-                  ? "bg-orange-500 text-white"
-                  : "bg-gray-100 text-gray-600"
+                activeCategory === cat ? "bg-orange-500 text-white" : "bg-gray-100 text-gray-600"
               }`}
             >
               {cat}
@@ -126,8 +122,12 @@ export default function MenuPage() {
         </div>
       </header>
 
-      {/* メニューグリッド */}
       <main className="max-w-lg mx-auto px-4 pt-4">
+        {/* 税表示モード */}
+        <p className="text-xs text-gray-400 mb-3 text-right">
+          価格はすべて{taxSettings.displayMode === "included" ? "税込" : "税抜"}表示
+        </p>
+
         {filteredItems.length === 0 ? (
           <div className="text-center py-20 text-gray-400">
             <p className="text-4xl mb-3">😔</p>
@@ -136,18 +136,17 @@ export default function MenuPage() {
         ) : (
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             {filteredItems.map((item) => (
-              <MenuCard key={item.id} item={item} />
+              <MenuCard key={item.id} item={item} taxSettings={taxSettings} />
             ))}
           </div>
         )}
       </main>
 
-      {/* カートバー */}
-      <Cart onCheckout={handleCheckout} />
+      <Cart onCheckout={() => setShowConfirm(true)} />
 
-      {/* 注文確認モーダル */}
       {showConfirm && (
         <OrderConfirmModal
+          taxSettings={taxSettings}
           onConfirm={handleConfirmOrder}
           onCancel={() => setShowConfirm(false)}
           isSubmitting={isSubmitting}

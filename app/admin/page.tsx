@@ -93,6 +93,12 @@ export default function AdminPage() {
           </div>
           <div className="flex gap-2">
             <Link
+              href="/admin/settings"
+              className="px-3 py-2 border border-gray-300 text-gray-600 rounded-xl text-sm font-medium"
+            >
+              ⚙️
+            </Link>
+            <Link
               href="/admin/menu"
               className="px-4 py-2 bg-orange-500 text-white rounded-xl text-sm font-medium hover:bg-orange-600"
             >

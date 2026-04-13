@@ -1,23 +1,27 @@
 "use client";
 
 import Image from "next/image";
-import { MenuItem } from "@/lib/types";
+import { MenuItem, TaxSettings } from "@/lib/types";
 import { useCartStore } from "@/lib/store";
+import { displayPrice } from "@/lib/tax";
 import toast from "react-hot-toast";
 
 interface MenuCardProps {
   item: MenuItem;
+  taxSettings: TaxSettings;
 }
 
-export function MenuCard({ item }: MenuCardProps) {
+export function MenuCard({ item, taxSettings }: MenuCardProps) {
   const { addItem, items } = useCartStore();
   const cartItem = items.find((i) => i.itemId === item.id);
+  const { amount, label } = displayPrice(item.price, item.taxType ?? "standard", taxSettings);
 
   const handleAdd = () => {
     addItem({
       itemId: item.id,
       name: item.name,
       price: item.price,
+      taxType: item.taxType ?? "standard",
       quantity: 1,
     });
     toast.success(`${item.name}をカートに追加しました`);
@@ -44,15 +48,23 @@ export function MenuCard({ item }: MenuCardProps) {
             {cartItem.quantity}
           </div>
         )}
+        {item.taxType === "reduced" && (
+          <div className="absolute top-2 left-2 bg-green-500 text-white text-xs px-2 py-0.5 rounded-full font-medium">
+            軽減税率
+          </div>
+        )}
       </div>
 
       <div className="p-4">
         <h3 className="text-lg font-bold text-gray-800 mb-1">{item.name}</h3>
         <p className="text-sm text-gray-500 mb-3 line-clamp-2">{item.description}</p>
         <div className="flex items-center justify-between">
-          <span className="text-xl font-bold text-orange-600">
-            ¥{item.price.toLocaleString()}
-          </span>
+          <div>
+            <span className="text-xl font-bold text-orange-600">
+              ¥{amount.toLocaleString()}
+            </span>
+            <span className="text-xs text-gray-400 ml-1">（{label}）</span>
+          </div>
           <button
             onClick={handleAdd}
             disabled={!item.isAvailable}
