@@ -7,13 +7,23 @@ import {
   query,
   where,
   onSnapshot,
-  orderBy,
 } from "firebase/firestore";
 import { Order, OrderStatus } from "@/lib/types";
 import { OrderCard } from "@/components/kitchen/OrderCard";
 import toast from "react-hot-toast";
 
 type TabType = "active" | "served";
+
+// Firestoreタイムスタンプをミリ秒に変換
+function toMs(ts: unknown): number {
+  if (!ts) return 0;
+  if (typeof ts === "object" && ts !== null && "toDate" in ts) {
+    return (ts as { toDate: () => Date }).toDate().getTime();
+  }
+  if (ts instanceof Date) return ts.getTime();
+  if (typeof ts === "string") return new Date(ts).getTime();
+  return 0;
+}
 
 export default function KitchenPage() {
   const [orders, setOrders] = useState<(Order & { id: string })[]>([]);
@@ -22,24 +32,23 @@ export default function KitchenPage() {
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
   useEffect(() => {
-    // Firestoreのリアルタイムリスナー（未対応・調理中）
+    // orderByを外してJS側でソート（複合インデックス不要）
     const activeQ = query(
       collection(db, "orders"),
-      where("status", "in", ["pending", "preparing"]),
-      orderBy("createdAt", "asc")
+      where("status", "in", ["pending", "preparing"])
     );
 
     const servedQ = query(
       collection(db, "orders"),
-      where("status", "==", "served"),
-      orderBy("updatedAt", "desc")
+      where("status", "==", "served")
     );
 
     const unsubActive = onSnapshot(activeQ, (snapshot) => {
-      const activeOrders = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as (Order & { id: string })[];
+      const activeOrders = snapshot.docs
+        .map((doc) => ({ id: doc.id, ...doc.data() })) as (Order & { id: string })[];
+
+      // JS側で古い順にソート
+      activeOrders.sort((a, b) => toMs(a.createdAt) - toMs(b.createdAt));
 
       setOrders((prev) => {
         const servedOrders = prev.filter((o) => o.status === "served");
@@ -51,17 +60,17 @@ export default function KitchenPage() {
 
     const unsubServed = onSnapshot(servedQ, (snapshot) => {
       const servedOrders = snapshot.docs
-        .slice(0, 20) // 直近20件のみ表示
-        .map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-        })) as (Order & { id: string })[];
+        .map((doc) => ({ id: doc.id, ...doc.data() })) as (Order & { id: string })[];
+
+      // JS側で新しい順にソートして直近20件
+      servedOrders.sort((a, b) => toMs(b.updatedAt) - toMs(a.updatedAt));
+      const recent = servedOrders.slice(0, 20);
 
       setOrders((prev) => {
         const activeOrders = prev.filter(
           (o) => o.status === "pending" || o.status === "preparing"
         );
-        return [...activeOrders, ...servedOrders];
+        return [...activeOrders, ...recent];
       });
     });
 
