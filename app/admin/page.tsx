@@ -91,12 +91,20 @@ export default function AdminPage() {
             <h1 className="text-2xl font-bold text-gray-800">管理画面</h1>
             <p className="text-sm text-gray-500">QRコード発行・テーブル管理</p>
           </div>
-          <Link
-            href="/kitchen"
-            className="px-4 py-2 bg-gray-800 text-white rounded-xl text-sm font-medium hover:bg-gray-900"
-          >
-            厨房画面
-          </Link>
+          <div className="flex gap-2">
+            <Link
+              href="/admin/menu"
+              className="px-4 py-2 bg-orange-500 text-white rounded-xl text-sm font-medium hover:bg-orange-600"
+            >
+              メニュー管理
+            </Link>
+            <Link
+              href="/kitchen"
+              className="px-4 py-2 bg-gray-800 text-white rounded-xl text-sm font-medium hover:bg-gray-900"
+            >
+              厨房画面
+            </Link>
+          </div>
         </div>
       </header>
 
