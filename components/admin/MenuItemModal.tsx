@@ -3,7 +3,6 @@
 import { useState, useRef } from "react";
 import Image from "next/image";
 import { MenuItem, TaxType } from "@/lib/types";
-import { uploadMenuImage } from "@/lib/uploadImage";
 import toast from "react-hot-toast";
 
 export type MenuFormData = Omit<MenuItem, "id" | "isAvailable">;
@@ -43,30 +42,63 @@ export function MenuItemModal({
   const set = <K extends keyof MenuFormData>(key: K, value: MenuFormData[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
-  // 画像アップロード（カメラ・ライブラリ共通）
+  // 画像をImgurにアップロード
   const handleImageFile = async (file: File) => {
     if (!file.type.startsWith("image/")) {
       toast.error("画像ファイルを選択してください");
       return;
     }
+
     setIsUploading(true);
+    const toastId = toast.loading("Imgurにアップロード中...");
+
     try {
-      const url = await uploadMenuImage(file);
+      const formData = new FormData();
+      formData.append("image", file);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error ?? "アップロード失敗");
+      }
+
+      const { url } = await res.json();
       set("imageUrl", url);
-      toast.success("画像をアップロードしました");
-    } catch {
-      toast.error("画像のアップロードに失敗しました\nFirebase Storageが有効か確認してください");
+      toast.success("画像をアップロードしました！", { id: toastId });
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : "アップロードに失敗しました";
+      toast.error(msg, { id: toastId });
     } finally {
       setIsUploading(false);
     }
   };
 
+  // カメラ起動
+  const openCamera = () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.capture = "environment";
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) handleImageFile(file);
+    };
+    input.click();
+  };
+
+  // ライブラリから選択
+  const openLibrary = () => fileInputRef.current?.click();
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) handleImageFile(file);
+    e.target.value = "";
   };
 
-  // カテゴリ追加
   const handleAddCategory = () => {
     const cat = newCategory.trim();
     if (!cat) return;
@@ -84,101 +116,73 @@ export function MenuItemModal({
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 p-4">
       <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl max-h-[92vh] overflow-y-auto">
         <div className="p-5">
-          {/* ヘッダー */}
           <div className="flex items-center justify-between mb-5">
             <h2 className="text-xl font-bold text-gray-800">
               {isEdit ? "メニューを編集" : "メニューを追加"}
             </h2>
-            <button onClick={onClose} className="text-gray-400 text-3xl leading-none w-8 h-8 flex items-center justify-center">
-              ×
-            </button>
+            <button onClick={onClose} className="text-gray-400 text-3xl leading-none w-8 h-8 flex items-center justify-center">×</button>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
 
-            {/* ===== 画像アップロード ===== */}
+            {/* ===== 画像 ===== */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                商品画像
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">商品画像</label>
 
               {/* プレビュー */}
               <div className="relative h-44 w-full rounded-2xl overflow-hidden bg-gray-100 mb-3">
                 {isUploading ? (
-                  <div className="absolute inset-0 flex items-center justify-center bg-gray-100">
-                    <div className="text-center">
-                      <div className="animate-spin text-3xl mb-2">📷</div>
-                      <p className="text-sm text-gray-500">アップロード中...</p>
-                    </div>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-100 gap-2">
+                    <div className="w-10 h-10 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                    <p className="text-sm text-gray-500">アップロード中...</p>
                   </div>
                 ) : form.imageUrl ? (
                   <>
-                    <Image
-                      src={form.imageUrl}
-                      alt="プレビュー"
-                      fill
-                      className="object-cover"
-                      unoptimized
-                    />
+                    <Image src={form.imageUrl} alt="プレビュー" fill className="object-cover" unoptimized />
                     <button
                       type="button"
                       onClick={() => set("imageUrl", "")}
-                      className="absolute top-2 right-2 bg-black/50 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm"
+                      className="absolute top-2 right-2 bg-black/50 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm font-bold"
                     >
                       ×
                     </button>
                   </>
                 ) : (
-                  <div className="absolute inset-0 flex items-center justify-center text-gray-400">
+                  <div className="absolute inset-0 flex items-center justify-center text-gray-300">
                     <div className="text-center">
-                      <p className="text-4xl mb-2">🖼️</p>
-                      <p className="text-sm">写真を追加</p>
+                      <p className="text-5xl mb-2">📷</p>
+                      <p className="text-sm text-gray-400">写真を追加してください</p>
                     </div>
                   </div>
                 )}
               </div>
 
-              {/* アップロードボタン群 */}
+              {/* アップロードボタン */}
               <div className="grid grid-cols-2 gap-2">
-                {/* カメラで撮影（スマホ・iPad） */}
                 <button
                   type="button"
-                  onClick={() => {
-                    const input = document.createElement("input");
-                    input.type = "file";
-                    input.accept = "image/*";
-                    input.capture = "environment";
-                    input.onchange = (e) => {
-                      const file = (e.target as HTMLInputElement).files?.[0];
-                      if (file) handleImageFile(file);
-                    };
-                    input.click();
-                  }}
+                  onClick={openCamera}
                   disabled={isUploading}
-                  className="flex items-center justify-center gap-2 py-3 border-2 border-dashed border-gray-300 rounded-xl text-sm font-medium text-gray-600 hover:border-orange-400 hover:text-orange-500 transition-colors disabled:opacity-50"
+                  className="flex items-center justify-center gap-2 py-3 bg-orange-50 border-2 border-orange-200 rounded-xl text-sm font-semibold text-orange-600 active:scale-95 transition-transform disabled:opacity-40"
                 >
                   📷 カメラで撮影
                 </button>
-
-                {/* ライブラリから選択 */}
                 <button
                   type="button"
-                  onClick={() => fileInputRef.current?.click()}
+                  onClick={openLibrary}
                   disabled={isUploading}
-                  className="flex items-center justify-center gap-2 py-3 border-2 border-dashed border-gray-300 rounded-xl text-sm font-medium text-gray-600 hover:border-orange-400 hover:text-orange-500 transition-colors disabled:opacity-50"
+                  className="flex items-center justify-center gap-2 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl text-sm font-semibold text-gray-600 active:scale-95 transition-transform disabled:opacity-40"
                 >
-                  🖼️ ライブラリから
+                  🖼️ アルバムから選択
                 </button>
-
-                {/* 隠しinput（ライブラリ用） */}
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleFileChange}
-                />
               </div>
+
+              <p className="text-xs text-gray-400 mt-2 text-center">
+                写真はImgurに自動アップロードされます
+              </p>
+
+              {/* 隠しinput */}
+              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
             </div>
 
             {/* ===== 商品名 ===== */}
@@ -214,22 +218,16 @@ export function MenuItemModal({
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  税区分
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">税区分</label>
                 <select
                   value={form.taxType}
                   onChange={(e) => set("taxType", e.target.value as TaxType)}
                   className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white"
                 >
-                  <option value="standard">標準税率（10%）</option>
-                  <option value="reduced">軽減税率（8%）</option>
+                  <option value="standard">標準（10%）</option>
+                  <option value="reduced">軽減（8%）</option>
                 </select>
               </div>
-            </div>
-
-            <div className="bg-blue-50 rounded-xl px-4 py-2 text-xs text-blue-600">
-              💡 軽減税率（8%）はテイクアウトや食品に適用。税率は設定画面で変更できます。
             </div>
 
             {/* ===== カテゴリ ===== */}
@@ -244,9 +242,7 @@ export function MenuItemModal({
                     onChange={(e) => set("category", e.target.value)}
                     className="flex-1 border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-orange-400 bg-white"
                   >
-                    {categories.map((c) => (
-                      <option key={c} value={c}>{c}</option>
-                    ))}
+                    {categories.map((c) => <option key={c} value={c}>{c}</option>)}
                   </select>
                   <button
                     type="button"
@@ -266,29 +262,15 @@ export function MenuItemModal({
                     placeholder="新しいカテゴリ名"
                     className="flex-1 border border-orange-400 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-orange-400"
                   />
-                  <button
-                    type="button"
-                    onClick={handleAddCategory}
-                    className="px-4 py-3 bg-orange-500 text-white rounded-xl text-sm font-semibold"
-                  >
-                    追加
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowNewCategory(false)}
-                    className="px-3 py-3 border border-gray-300 text-gray-500 rounded-xl text-sm"
-                  >
-                    ✕
-                  </button>
+                  <button type="button" onClick={handleAddCategory} className="px-4 py-3 bg-orange-500 text-white rounded-xl text-sm font-semibold">追加</button>
+                  <button type="button" onClick={() => setShowNewCategory(false)} className="px-3 py-3 border border-gray-300 text-gray-500 rounded-xl text-sm">✕</button>
                 </div>
               )}
             </div>
 
             {/* ===== 説明文 ===== */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                説明文
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">説明文</label>
               <textarea
                 value={form.description}
                 onChange={(e) => set("description", e.target.value)}
@@ -300,9 +282,7 @@ export function MenuItemModal({
 
             {/* ===== 表示順 ===== */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                表示順（小さいほど上に表示）
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">表示順（小さいほど上）</label>
               <input
                 type="number"
                 min="0"
@@ -314,18 +294,10 @@ export function MenuItemModal({
 
             {/* ===== 保存ボタン ===== */}
             <div className="flex gap-3 pt-2">
-              <button
-                type="button"
-                onClick={onClose}
-                className="flex-1 py-4 border-2 border-gray-300 text-gray-600 rounded-xl text-base font-semibold"
-              >
+              <button type="button" onClick={onClose} className="flex-1 py-4 border-2 border-gray-300 text-gray-600 rounded-xl text-base font-semibold">
                 キャンセル
               </button>
-              <button
-                type="submit"
-                disabled={isSaving || isUploading}
-                className="flex-1 py-4 bg-orange-500 disabled:bg-orange-300 text-white rounded-xl text-base font-bold"
-              >
+              <button type="submit" disabled={isSaving || isUploading} className="flex-1 py-4 bg-orange-500 disabled:bg-orange-300 text-white rounded-xl text-base font-bold">
                 {isSaving ? "保存中..." : isEdit ? "更新する" : "追加する"}
               </button>
             </div>
