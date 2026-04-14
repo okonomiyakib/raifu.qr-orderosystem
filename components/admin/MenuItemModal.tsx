@@ -42,7 +42,7 @@ export function MenuItemModal({
   const set = <K extends keyof MenuFormData>(key: K, value: MenuFormData[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
-  // 画像をImgurにアップロード
+  // 画像をCloudinaryにアップロード
   const handleImageFile = async (file: File) => {
     if (!file.type.startsWith("image/")) {
       toast.error("画像ファイルを選択してください");
@@ -50,24 +50,25 @@ export function MenuItemModal({
     }
 
     setIsUploading(true);
-    const toastId = toast.loading("Imgurにアップロード中...");
+    const toastId = toast.loading("Cloudinaryにアップロード中...");
 
     try {
+      const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+      const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET;
+
       const formData = new FormData();
-      formData.append("image", file);
+      formData.append("file", file);
+      formData.append("upload_preset", uploadPreset!);
 
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
+      const res = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+        { method: "POST", body: formData }
+      );
 
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error ?? "アップロード失敗");
-      }
+      if (!res.ok) throw new Error("アップロード失敗");
 
-      const { url } = await res.json();
-      set("imageUrl", url);
+      const data = await res.json();
+      set("imageUrl", data.secure_url);
       toast.success("画像をアップロードしました！", { id: toastId });
     } catch (e) {
       const msg = e instanceof Error ? e.message : "アップロードに失敗しました";
@@ -178,7 +179,7 @@ export function MenuItemModal({
               </div>
 
               <p className="text-xs text-gray-400 mt-2 text-center">
-                写真はImgurに自動アップロードされます
+                写真はCloudinaryに自動アップロードされます
               </p>
 
               {/* 隠しinput */}
@@ -277,18 +278,6 @@ export function MenuItemModal({
                 rows={2}
                 placeholder="例：ジューシーな鶏の唐揚げ。レモン添え"
                 className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base resize-none focus:outline-none focus:ring-2 focus:ring-orange-400"
-              />
-            </div>
-
-            {/* ===== 表示順 ===== */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">表示順（小さいほど上）</label>
-              <input
-                type="number"
-                min="0"
-                value={form.sortOrder}
-                onChange={(e) => set("sortOrder", parseInt(e.target.value) || 0)}
-                className="w-full border border-gray-300 rounded-xl px-4 py-3 text-base focus:outline-none focus:ring-2 focus:ring-orange-400"
               />
             </div>
 
