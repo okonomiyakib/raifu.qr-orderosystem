@@ -103,6 +103,21 @@ export default function KitchenPage() {
     []
   );
 
+  const handleItemDoneChange = useCallback(
+    async (orderId: string, itemsDone: number[]) => {
+      try {
+        await fetch(`/api/orders/${orderId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ itemsDone }),
+        });
+      } catch {
+        toast.error("更新に失敗しました");
+      }
+    },
+    []
+  );
+
   const activeOrders = orders.filter(
     (o) => o.status === "pending" || o.status === "preparing"
   );
@@ -196,6 +211,7 @@ export default function KitchenPage() {
                     key={order.id}
                     order={order}
                     onStatusChange={handleStatusChange}
+                    onItemDoneChange={handleItemDoneChange}
                   />
                 ))}
             </div>

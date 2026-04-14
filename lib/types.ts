@@ -51,6 +51,7 @@ export interface Order {
   totalAmount: number;
   status: OrderStatus;
   notes: string;
+  itemsDone: number[]; // 完了した品目のインデックス一覧
   createdAt: Timestamp | Date;
   updatedAt: Timestamp | Date;
 }

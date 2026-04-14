@@ -35,7 +35,7 @@ export async function GET(
   }
 }
 
-// PATCH /api/orders/[orderId] - 注文ステータス更新（厨房用）
+// PATCH /api/orders/[orderId] - 注文ステータス・品目完了状態の更新（厨房用）
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ orderId: string }> }
@@ -43,23 +43,25 @@ export async function PATCH(
   try {
     const { orderId } = await params;
     const body = await req.json();
-    const { status } = body as { status: OrderStatus };
-
-    const validStatuses: OrderStatus[] = ["pending", "preparing", "served"];
-    if (!validStatuses.includes(status)) {
-      return NextResponse.json(
-        { error: "無効なステータスです" },
-        { status: 400 }
-      );
-    }
+    const { status, itemsDone } = body as { status?: OrderStatus; itemsDone?: number[] };
 
     const docRef = doc(db, "orders", orderId);
-    await updateDoc(docRef, {
-      status,
-      updatedAt: Timestamp.now(),
-    });
+    const updateData: Record<string, unknown> = { updatedAt: Timestamp.now() };
 
-    return NextResponse.json({ id: orderId, status });
+    if (status !== undefined) {
+      const validStatuses: OrderStatus[] = ["pending", "preparing", "served"];
+      if (!validStatuses.includes(status)) {
+        return NextResponse.json({ error: "無効なステータスです" }, { status: 400 });
+      }
+      updateData.status = status;
+    }
+
+    if (itemsDone !== undefined) {
+      updateData.itemsDone = itemsDone;
+    }
+
+    await updateDoc(docRef, updateData);
+    return NextResponse.json({ id: orderId, ...updateData });
   } catch (error) {
     console.error("注文ステータス更新エラー:", error);
     return NextResponse.json({ error: "ステータスの更新に失敗しました" }, { status: 500 });
