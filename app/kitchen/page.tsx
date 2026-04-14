@@ -229,6 +229,7 @@ export default function KitchenPage() {
                   key={order.id}
                   order={order}
                   onStatusChange={handleStatusChange}
+                  onItemDoneChange={handleItemDoneChange}
                 />
               ))}
             </div>
