@@ -11,20 +11,18 @@ const STATUS_BADGE: Record<OrderStatus, string> = {
 
 const STATUS_LABEL: Record<OrderStatus, string> = {
   pending: "未対応",
-  preparing: "調理中",
+  preparing: "提供中",
   served: "提供済",
 };
 
 interface OrderCardProps {
   order: Order & { id: string };
   onStatusChange: (orderId: string, newStatus: OrderStatus) => void;
-  onItemDoneChange: (orderId: string, itemsDone: number[]) => void;
+  onItemDoneChange: (orderId: string, itemsDone: Record<string, number>) => void;
 }
 
 export function OrderCard({ order, onStatusChange, onItemDoneChange }: OrderCardProps) {
-  const itemsDone: number[] = order.itemsDone ?? [];
-  const totalItems = order.items.length;
-  const doneCount = itemsDone.length;
+  const itemsDone: Record<string, number> = order.itemsDone ?? {};
   const [loading, setLoading] = useState(false);
 
   const createdAt =
@@ -39,33 +37,53 @@ export function OrderCard({ order, onStatusChange, onItemDoneChange }: OrderCard
     minute: "2-digit",
   });
 
+  // 全品目の合計数と提供済み合計数
+  const totalAll = order.items.reduce((sum, item) => sum + item.quantity, 0);
+  const doneAll = order.items.reduce((sum, _, idx) => sum + (itemsDone[String(idx)] ?? 0), 0);
+  const allServed = doneAll === totalAll;
+
   const cardColor =
     order.status === "served"
       ? "bg-green-100 border-green-400 border-2"
-      : doneCount > 0
+      : doneAll > 0
       ? "bg-yellow-100 border-yellow-400 border-2"
       : "bg-red-100 border-red-400 border-2";
 
-  const handleToggleItem = async (idx: number) => {
+  const updateCount = async (idx: number, delta: number) => {
     if (order.status === "served" || loading) return;
     setLoading(true);
 
-    const newDone = itemsDone.includes(idx)
-      ? itemsDone.filter((i) => i !== idx)
-      : [...itemsDone, idx];
+    const current = itemsDone[idx] ?? 0;
+    const max = order.items[idx].quantity;
+    const newCount = Math.min(max, Math.max(0, current + delta));
 
+    const newDone: Record<string, number> = { ...itemsDone, [String(idx)]: newCount };
     await onItemDoneChange(order.id, newDone);
 
-    // 調理中ステータスに移行
-    if (order.status === "pending" && newDone.length > 0) {
+    // 1品でも提供されたら「提供中」に
+    const newDoneAll = order.items.reduce((sum, _, i) => sum + (newDone[String(i)] ?? 0), 0);
+    if (order.status === "pending" && newDoneAll > 0) {
       await onStatusChange(order.id, "preparing");
     }
 
-    // 全品完了 → 提供済に自動移行
-    if (newDone.length === totalItems) {
+    // 全品提供完了 → 自動で提供済
+    const newTotalDone = order.items.reduce((sum, item, i) => {
+      return (newDone[String(i)] ?? 0) >= item.quantity ? sum + 1 : sum;
+    }, 0);
+    if (newTotalDone === order.items.length) {
       await onStatusChange(order.id, "served");
     }
 
+    setLoading(false);
+  };
+
+  const handleAllServed = async () => {
+    if (loading) return;
+    setLoading(true);
+    const allDone: Record<string, number> = {};
+    order.items.forEach((item, idx) => { allDone[idx] = item.quantity; });
+    await onItemDoneChange(order.id, allDone);
+    await onStatusChange(order.id, "served");
     setLoading(false);
   };
 
@@ -84,17 +102,17 @@ export function OrderCard({ order, onStatusChange, onItemDoneChange }: OrderCard
         <span className="text-sm text-gray-500">{timeStr}</span>
       </div>
 
-      {/* 進捗 */}
+      {/* 全体進捗バー */}
       {order.status !== "served" && (
         <div className="mb-3">
           <div className="flex justify-between text-xs text-gray-500 mb-1">
             <span>提供進捗</span>
-            <span className="font-bold text-gray-700">{doneCount} / {totalItems} 品</span>
+            <span className="font-bold text-gray-700">{doneAll} / {totalAll} 品</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2.5">
             <div
               className="bg-green-500 h-2.5 rounded-full transition-all duration-300"
-              style={{ width: `${totalItems > 0 ? (doneCount / totalItems) * 100 : 0}%` }}
+              style={{ width: `${totalAll > 0 ? (doneAll / totalAll) * 100 : 0}%` }}
             />
           </div>
         </div>
@@ -103,40 +121,50 @@ export function OrderCard({ order, onStatusChange, onItemDoneChange }: OrderCard
       {/* 品目一覧 */}
       <div className="space-y-2 mb-3">
         {order.items.map((item, idx) => {
-          const isDone = itemsDone.includes(idx);
+          const served = itemsDone[String(idx)] ?? 0;
+          const total = item.quantity;
+          const itemDone = served >= total;
+
           return (
             <div
               key={idx}
-              className={`flex justify-between items-center rounded-xl px-3 py-2.5 ${
-                isDone ? "bg-green-200" : "bg-white/70"
-              }`}
+              className={`rounded-xl px-3 py-2.5 ${itemDone ? "bg-green-200" : "bg-white/70"}`}
             >
-              <div className="flex items-center gap-2 flex-1 min-w-0">
-                {isDone ? (
-                  <span className="text-green-600 text-lg font-black">✓</span>
-                ) : (
-                  <span className="text-gray-300 text-lg font-black">○</span>
-                )}
-                <span className={`font-semibold text-base ${isDone ? "line-through text-gray-400" : "text-gray-800"}`}>
-                  {item.name}
-                </span>
-                <span className={`text-sm ${isDone ? "text-gray-400" : "text-gray-600"}`}>
-                  × {item.quantity}
+              {/* 品目名と完了マーク */}
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className={`text-lg font-black leading-none ${itemDone ? "text-green-600" : "text-gray-300"}`}>
+                    {itemDone ? "✓" : "○"}
+                  </span>
+                  <span className={`font-semibold text-base truncate ${itemDone ? "line-through text-gray-400" : "text-gray-800"}`}>
+                    {item.name}
+                  </span>
+                </div>
+                {/* 提供済み数 / 注文数 */}
+                <span className={`text-sm font-bold flex-shrink-0 ml-2 ${itemDone ? "text-green-600" : "text-gray-700"}`}>
+                  {served} / {total} 品
                 </span>
               </div>
 
+              {/* ＋／－ボタン */}
               {order.status !== "served" && (
-                <button
-                  onClick={() => handleToggleItem(idx)}
-                  disabled={loading}
-                  className={`ml-2 flex-shrink-0 px-3 py-1.5 rounded-lg text-sm font-bold border-2 transition-all active:scale-95 disabled:opacity-50 ${
-                    isDone
-                      ? "bg-white border-gray-300 text-gray-500"
-                      : "bg-green-500 border-green-600 text-white shadow-sm"
-                  }`}
-                >
-                  {isDone ? "戻す" : "提供完了"}
-                </button>
+                <div className="flex items-center justify-end gap-3">
+                  <button
+                    onClick={() => updateCount(idx, -1)}
+                    disabled={served === 0 || loading}
+                    className="w-9 h-9 rounded-full bg-gray-200 text-gray-600 text-xl font-bold flex items-center justify-center disabled:opacity-30 active:scale-95 transition-transform"
+                  >
+                    －
+                  </button>
+                  <span className="text-lg font-black text-gray-800 w-6 text-center">{served}</span>
+                  <button
+                    onClick={() => updateCount(idx, 1)}
+                    disabled={served === total || loading}
+                    className="w-9 h-9 rounded-full bg-green-500 text-white text-xl font-bold flex items-center justify-center disabled:opacity-30 active:scale-95 transition-transform"
+                  >
+                    ＋
+                  </button>
+                </div>
               )}
             </div>
           );
@@ -150,19 +178,12 @@ export function OrderCard({ order, onStatusChange, onItemDoneChange }: OrderCard
         </div>
       )}
 
-      {/* 全品まとめて完了ボタン（まだ全部終わっていない場合のみ） */}
-      {order.status !== "served" && doneCount < totalItems && (
+      {/* 全品まとめて完了ボタン */}
+      {order.status !== "served" && !allServed && (
         <button
-          onClick={async () => {
-            if (loading) return;
-            setLoading(true);
-            const allIndices = order.items.map((_, i) => i);
-            await onItemDoneChange(order.id, allIndices);
-            await onStatusChange(order.id, "served");
-            setLoading(false);
-          }}
+          onClick={handleAllServed}
           disabled={loading}
-          className="w-full py-2.5 rounded-xl text-sm font-bold text-white bg-gray-500 hover:bg-gray-600 transition-colors disabled:opacity-50"
+          className="w-full py-2.5 rounded-xl text-sm font-bold text-white bg-gray-500 hover:bg-gray-600 transition-colors disabled:opacity-50 active:scale-95"
         >
           全品まとめて提供完了
         </button>

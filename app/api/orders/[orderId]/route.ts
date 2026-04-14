@@ -43,7 +43,7 @@ export async function PATCH(
   try {
     const { orderId } = await params;
     const body = await req.json();
-    const { status, itemsDone } = body as { status?: OrderStatus; itemsDone?: number[] };
+    const { status, itemsDone } = body as { status?: OrderStatus; itemsDone?: Record<string, number> };
 
     const docRef = doc(db, "orders", orderId);
     const updateData: Record<string, unknown> = { updatedAt: Timestamp.now() };

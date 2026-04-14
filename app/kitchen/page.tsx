@@ -104,7 +104,7 @@ export default function KitchenPage() {
   );
 
   const handleItemDoneChange = useCallback(
-    async (orderId: string, itemsDone: number[]) => {
+    async (orderId: string, itemsDone: Record<string, number>) => {
       try {
         await fetch(`/api/orders/${orderId}`, {
           method: "PATCH",
