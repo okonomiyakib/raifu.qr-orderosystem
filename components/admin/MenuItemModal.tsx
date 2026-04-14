@@ -81,20 +81,7 @@ export function MenuItemModal({
     }
   };
 
-  // カメラ起動
-  const openCamera = () => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = "image/*";
-    input.capture = "environment";
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) handleImageFile(file);
-    };
-    input.click();
-  };
-
-  // ライブラリから選択
+  // 端末の写真から選択
   const openLibrary = () => fileInputRef.current?.click();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -162,24 +149,14 @@ export function MenuItemModal({
               </div>
 
               {/* アップロードボタン */}
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={openCamera}
-                  disabled={isUploading}
-                  className="flex items-center justify-center gap-2 py-3 bg-orange-50 border-2 border-orange-200 rounded-xl text-sm font-semibold text-orange-600 active:scale-95 transition-transform disabled:opacity-40"
-                >
-                  📷 カメラで撮影
-                </button>
-                <button
-                  type="button"
-                  onClick={openLibrary}
-                  disabled={isUploading}
-                  className="flex items-center justify-center gap-2 py-3 bg-gray-50 border-2 border-gray-200 rounded-xl text-sm font-semibold text-gray-600 active:scale-95 transition-transform disabled:opacity-40"
-                >
-                  🖼️ アルバムから選択
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={openLibrary}
+                disabled={isUploading}
+                className="w-full flex items-center justify-center gap-2 py-3 bg-orange-50 border-2 border-orange-200 rounded-xl text-sm font-semibold text-orange-600 active:scale-95 transition-transform disabled:opacity-40"
+              >
+                🖼️ 端末の写真からアップロード
+              </button>
 
               <p className="text-xs text-gray-400 mt-2 text-center">
                 写真はCloudinaryに自動アップロードされます
