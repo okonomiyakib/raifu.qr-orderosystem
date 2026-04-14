@@ -65,9 +65,12 @@ export function MenuItemModal({
         { method: "POST", body: formData }
       );
 
-      if (!res.ok) throw new Error("アップロード失敗");
-
       const data = await res.json();
+      if (!res.ok) {
+        const errMsg = data?.error?.message ?? "アップロード失敗";
+        throw new Error(errMsg);
+      }
+
       set("imageUrl", data.secure_url);
       toast.success("画像をアップロードしました！", { id: toastId });
     } catch (e) {
