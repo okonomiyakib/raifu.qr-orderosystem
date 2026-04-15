@@ -10,6 +10,8 @@ import { Cart } from "@/components/customer/Cart";
 import { OrderConfirmModal } from "@/components/customer/OrderConfirmModal";
 import toast from "react-hot-toast";
 
+const CALL_COOLDOWN_MS = 30000; // 30秒クールダウン
+
 export default function MenuPage() {
   const { tableId } = useParams<{ tableId: string }>();
   const router = useRouter();
@@ -21,6 +23,8 @@ export default function MenuPage() {
   const [loading, setLoading] = useState(true);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCalling, setIsCalling] = useState(false);
+  const [callCooldown, setCallCooldown] = useState(false);
   const { setTable, items, clearCart } = useCartStore();
 
   const loadData = useCallback(async () => {
@@ -81,6 +85,26 @@ export default function MenuPage() {
     }
   };
 
+  const handleCallStaff = async () => {
+    if (callCooldown || isCalling) return;
+    setIsCalling(true);
+    try {
+      const res = await fetch("/api/calls", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ tableId, tableNumber }),
+      });
+      if (!res.ok) throw new Error();
+      toast.success("スタッフが参ります。少々お待ちください。", { duration: 4000 });
+      setCallCooldown(true);
+      setTimeout(() => setCallCooldown(false), CALL_COOLDOWN_MS);
+    } catch {
+      toast.error("呼び出しに失敗しました。もう一度お試しください");
+    } finally {
+      setIsCalling(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-orange-50">
@@ -102,7 +126,19 @@ export default function MenuPage() {
               <p className="text-sm text-orange-500 font-medium">テーブル {tableNumber}</p>
             )}
           </div>
-          <div className="text-3xl">🍽️</div>
+          {/* 呼び出しボタン */}
+          <button
+            onClick={handleCallStaff}
+            disabled={callCooldown || isCalling}
+            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all shadow-sm ${
+              callCooldown
+                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
+                : "bg-orange-100 text-orange-600 hover:bg-orange-200 active:scale-95"
+            }`}
+          >
+            <span className="text-lg">🔔</span>
+            {callCooldown ? "呼び出し済み" : "スタッフを呼ぶ"}
+          </button>
         </div>
 
         <div className="flex gap-2 px-4 pb-3 overflow-x-auto">

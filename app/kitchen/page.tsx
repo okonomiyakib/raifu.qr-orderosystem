@@ -8,6 +8,14 @@ import toast from "react-hot-toast";
 
 type TabType = "active" | "served";
 
+interface Call {
+  id: string;
+  tableId: string;
+  tableNumber: number;
+  status: string;
+  createdAt: string;
+}
+
 function toOrder(row: Record<string, unknown>): Order & { id: string } {
   return {
     id: row.id as string,
@@ -25,6 +33,7 @@ function toOrder(row: Record<string, unknown>): Order & { id: string } {
 
 export default function KitchenPage() {
   const [orders, setOrders] = useState<(Order & { id: string })[]>([]);
+  const [calls, setCalls] = useState<Call[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>("active");
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
@@ -51,21 +60,61 @@ export default function KitchenPage() {
     setLoading(false);
   }, []);
 
+  const fetchCalls = useCallback(async () => {
+    const { data } = await supabase
+      .from("calls")
+      .select("*")
+      .eq("status", "waiting")
+      .order("created_at", { ascending: true });
+
+    const newCalls: Call[] = (data ?? []).map((row) => ({
+      id: row.id,
+      tableId: row.table_id,
+      tableNumber: row.table_number,
+      status: row.status,
+      createdAt: row.created_at,
+    }));
+
+    // 新しい呼び出しがあったらトースト通知
+    setCalls((prev) => {
+      const prevIds = new Set(prev.map((c) => c.id));
+      newCalls.forEach((c) => {
+        if (!prevIds.has(c.id)) {
+          toast(`🔔 テーブル ${c.tableNumber} から呼び出し`, {
+            duration: 6000,
+            style: { background: "#fee2e2", color: "#991b1b", fontWeight: "bold" },
+          });
+        }
+      });
+      return newCalls;
+    });
+  }, []);
+
   useEffect(() => {
     fetchOrders();
+    fetchCalls();
 
-    // Realtime でオーダー変更を監視
     const channel = supabase
-      .channel("kitchen-orders")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "orders" },
-        () => { fetchOrders(); }
-      )
+      .channel("kitchen-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => {
+        fetchOrders();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "calls" }, () => {
+        fetchCalls();
+      })
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [fetchOrders]);
+  }, [fetchOrders, fetchCalls]);
+
+  const handleRespondCall = async (callId: string, tableNumber: number) => {
+    try {
+      await fetch(`/api/calls/${callId}`, { method: "PATCH" });
+      toast.success(`テーブル ${tableNumber} の呼び出しに対応しました`);
+    } catch {
+      toast.error("更新に失敗しました");
+    }
+  };
 
   const handleStatusChange = useCallback(
     async (orderId: string, newStatus: OrderStatus) => {
@@ -138,7 +187,6 @@ export default function KitchenPage() {
             </div>
           </div>
 
-          {/* サマリーバッジ */}
           <div className="flex gap-3">
             <div className="text-center bg-red-900/50 border border-red-600 rounded-xl px-4 py-2">
               <p className="text-2xl font-black text-red-400">{pendingCount}</p>
@@ -151,6 +199,36 @@ export default function KitchenPage() {
           </div>
         </div>
       </header>
+
+      {/* 呼び出し通知エリア */}
+      {calls.length > 0 && (
+        <div className="max-w-6xl mx-auto px-4 pt-4">
+          <div className="bg-red-900/60 border border-red-500 rounded-xl p-3">
+            <p className="text-red-300 text-xs font-bold mb-2 uppercase tracking-wide">
+              🔔 呼び出し ({calls.length}件)
+            </p>
+            <div className="flex flex-wrap gap-2">
+              {calls.map((call) => (
+                <div
+                  key={call.id}
+                  className="flex items-center gap-2 bg-red-800/60 border border-red-600 rounded-lg px-3 py-2"
+                >
+                  <span className="font-bold text-white">テーブル {call.tableNumber}</span>
+                  <span className="text-red-300 text-xs">
+                    {new Date(call.createdAt).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" })}
+                  </span>
+                  <button
+                    onClick={() => handleRespondCall(call.id, call.tableNumber)}
+                    className="bg-red-500 hover:bg-red-400 text-white text-xs font-semibold px-2 py-1 rounded transition-colors"
+                  >
+                    対応済み
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* タブ */}
       <div className="max-w-6xl mx-auto px-4 pt-4">
@@ -177,7 +255,6 @@ export default function KitchenPage() {
           </button>
         </div>
 
-        {/* 注文カード一覧 */}
         {activeTab === "active" ? (
           activeOrders.length === 0 ? (
             <div className="text-center py-20 text-gray-500">
