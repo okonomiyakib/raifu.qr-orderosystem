@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import Image from "next/image";
 import { MenuItem, TaxType } from "@/lib/types";
 import toast from "react-hot-toast";
+import { uploadMenuImage } from "@/lib/uploadImage";
 
 export type MenuFormData = Omit<MenuItem, "id" | "isAvailable">;
 
@@ -42,7 +43,7 @@ export function MenuItemModal({
   const set = <K extends keyof MenuFormData>(key: K, value: MenuFormData[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
-  // 画像をCloudinaryにアップロード
+  // 画像をFirebase Storageにアップロード
   const handleImageFile = async (file: File) => {
     if (!file.type.startsWith("image/")) {
       toast.error("画像ファイルを選択してください");
@@ -50,28 +51,11 @@ export function MenuItemModal({
     }
 
     setIsUploading(true);
-    const toastId = toast.loading("Cloudinaryにアップロード中...");
+    const toastId = toast.loading("アップロード中...");
 
     try {
-      const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME ?? "dadqxvtpy";
-      const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET ?? "ml_default";
-
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", uploadPreset);
-
-      const res = await fetch(
-        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-        { method: "POST", body: formData }
-      );
-
-      const data = await res.json();
-      if (!res.ok) {
-        const errMsg = data?.error?.message ?? "アップロード失敗";
-        throw new Error(errMsg);
-      }
-
-      set("imageUrl", data.secure_url);
+      const url = await uploadMenuImage(file);
+      set("imageUrl", url);
       toast.success("画像をアップロードしました！", { id: toastId });
     } catch (e) {
       const msg = e instanceof Error ? e.message : "アップロードに失敗しました";
@@ -159,7 +143,7 @@ export function MenuItemModal({
               </button>
 
               <p className="text-xs text-gray-400 mt-2 text-center">
-                写真はCloudinaryに自動アップロードされます
+                写真はFirebaseに自動アップロードされます
               </p>
 
               {/* 隠しinput */}
