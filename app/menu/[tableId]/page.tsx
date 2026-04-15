@@ -2,8 +2,6 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { db } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
 import { MenuItem, TaxSettings } from "@/lib/types";
 import { DEFAULT_TAX_SETTINGS } from "@/lib/tax";
 import { useCartStore } from "@/lib/store";
@@ -27,13 +25,13 @@ export default function MenuPage() {
 
   const loadData = useCallback(async () => {
     try {
-      const tableDoc = await getDoc(doc(db, "tables", tableId));
-      if (!tableDoc.exists()) {
+      const tableRes = await fetch(`/api/tables/${tableId}`);
+      if (!tableRes.ok) {
         toast.error("テーブルが見つかりません");
         setLoading(false);
         return;
       }
-      const tableData = tableDoc.data();
+      const tableData = await tableRes.json();
       setTable(tableId, tableData.tableNumber);
       setTableNumberState(tableData.tableNumber);
 
@@ -123,7 +121,6 @@ export default function MenuPage() {
       </header>
 
       <main className="max-w-lg mx-auto px-4 pt-4">
-        {/* 税表示モード */}
         <p className="text-xs text-gray-400 mb-3 text-right">
           価格はすべて{taxSettings.displayMode === "included" ? "税込" : "税抜"}表示
         </p>

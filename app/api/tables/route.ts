@@ -1,35 +1,49 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/firebase";
-import { collection, getDocs, addDoc, query, orderBy } from "firebase/firestore";
+import { supabase } from "@/lib/supabase";
 import { Table } from "@/lib/types";
+
+function toTable(row: Record<string, unknown>): Table {
+  return {
+    id: row.id as string,
+    tableNumber: row.table_number as number,
+    name: row.name as string,
+    isActive: row.is_active as boolean,
+    capacity: row.capacity as number,
+  };
+}
 
 // GET /api/tables - テーブル一覧取得
 export async function GET() {
-  try {
-    const q = query(collection(db, "tables"), orderBy("tableNumber", "asc"));
-    const snapshot = await getDocs(q);
-    const tables: Table[] = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    })) as Table[];
-    return NextResponse.json(tables);
-  } catch (error) {
+  const { data, error } = await supabase
+    .from("tables")
+    .select("*")
+    .order("table_number", { ascending: true });
+
+  if (error) {
     console.error("テーブル取得エラー:", error);
     return NextResponse.json({ error: "テーブルの取得に失敗しました" }, { status: 500 });
   }
+
+  return NextResponse.json((data ?? []).map(toTable));
 }
 
 // POST /api/tables - テーブル追加（管理者用）
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const docRef = await addDoc(collection(db, "tables"), {
-      tableNumber: body.tableNumber,
-      name: body.name || `テーブル${body.tableNumber}`,
-      isActive: true,
-      capacity: body.capacity || 4,
-    });
-    return NextResponse.json({ id: docRef.id, ...body });
+    const { data, error } = await supabase
+      .from("tables")
+      .insert({
+        table_number: body.tableNumber,
+        name: body.name || `テーブル${body.tableNumber}`,
+        is_active: true,
+        capacity: body.capacity || 4,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return NextResponse.json(toTable(data));
   } catch (error) {
     console.error("テーブル追加エラー:", error);
     return NextResponse.json({ error: "テーブルの追加に失敗しました" }, { status: 500 });

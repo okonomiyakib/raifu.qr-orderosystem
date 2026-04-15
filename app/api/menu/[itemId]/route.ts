@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/firebase";
-import { doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { supabase } from "@/lib/supabase";
 
 // PATCH /api/menu/[itemId] - メニュー更新
 export async function PATCH(
@@ -10,8 +9,24 @@ export async function PATCH(
   try {
     const { itemId } = await params;
     const body = await req.json();
-    const docRef = doc(db, "menuItems", itemId);
-    await updateDoc(docRef, body);
+
+    // camelCase → snake_case マッピング
+    const updateData: Record<string, unknown> = {};
+    if (body.name !== undefined) updateData.name = body.name;
+    if (body.description !== undefined) updateData.description = body.description;
+    if (body.price !== undefined) updateData.price = body.price;
+    if (body.taxType !== undefined) updateData.tax_type = body.taxType;
+    if (body.category !== undefined) updateData.category = body.category;
+    if (body.imageUrl !== undefined) updateData.image_url = body.imageUrl;
+    if (body.isAvailable !== undefined) updateData.is_available = body.isAvailable;
+    if (body.sortOrder !== undefined) updateData.sort_order = body.sortOrder;
+
+    const { error } = await supabase
+      .from("menu_items")
+      .update(updateData)
+      .eq("id", itemId);
+
+    if (error) throw error;
     return NextResponse.json({ id: itemId, ...body });
   } catch (error) {
     console.error("メニュー更新エラー:", error);
@@ -26,7 +41,12 @@ export async function DELETE(
 ) {
   try {
     const { itemId } = await params;
-    await deleteDoc(doc(db, "menuItems", itemId));
+    const { error } = await supabase
+      .from("menu_items")
+      .delete()
+      .eq("id", itemId);
+
+    if (error) throw error;
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("メニュー削除エラー:", error);

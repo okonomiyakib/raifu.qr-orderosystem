@@ -1,18 +1,23 @@
-import { storage } from "./firebase";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { supabase } from "./supabase";
+
+const BUCKET = "menu-images";
 
 export async function uploadMenuImage(file: File): Promise<string> {
   const ext = file.name.split(".").pop() ?? "jpg";
-  const fileName = `menuImages/${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
-  const storageRef = ref(storage, fileName);
+  const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
 
-  // 画像を圧縮してからアップロード
   const compressed = await compressImage(file, 800);
-  await uploadBytes(storageRef, compressed, { contentType: file.type });
-  return await getDownloadURL(storageRef);
+  const { error } = await supabase.storage
+    .from(BUCKET)
+    .upload(fileName, compressed, { contentType: "image/jpeg", upsert: false });
+
+  if (error) throw new Error(`アップロード失敗: ${error.message}`);
+
+  const { data } = supabase.storage.from(BUCKET).getPublicUrl(fileName);
+  return data.publicUrl;
 }
 
-// Canvas APIで画像を圧縮（最大widthPx px）
+// Canvas API で画像を圧縮（最大 maxWidth px）
 function compressImage(file: File, maxWidth: number): Promise<Blob> {
   return new Promise((resolve, reject) => {
     const img = new window.Image();

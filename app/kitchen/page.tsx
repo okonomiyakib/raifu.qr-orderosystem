@@ -1,28 +1,26 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { db } from "@/lib/firebase";
-import {
-  collection,
-  query,
-  where,
-  onSnapshot,
-} from "firebase/firestore";
+import { supabase } from "@/lib/supabase";
 import { Order, OrderStatus } from "@/lib/types";
 import { OrderCard } from "@/components/kitchen/OrderCard";
 import toast from "react-hot-toast";
 
 type TabType = "active" | "served";
 
-// Firestoreタイムスタンプをミリ秒に変換
-function toMs(ts: unknown): number {
-  if (!ts) return 0;
-  if (typeof ts === "object" && ts !== null && "toDate" in ts) {
-    return (ts as { toDate: () => Date }).toDate().getTime();
-  }
-  if (ts instanceof Date) return ts.getTime();
-  if (typeof ts === "string") return new Date(ts).getTime();
-  return 0;
+function toOrder(row: Record<string, unknown>): Order & { id: string } {
+  return {
+    id: row.id as string,
+    tableId: row.table_id as string,
+    tableNumber: row.table_number as number,
+    items: row.items as Order["items"],
+    totalAmount: row.total_amount as number,
+    status: row.status as OrderStatus,
+    notes: row.notes as string,
+    itemsDone: (row.items_done ?? {}) as Record<string, number>,
+    createdAt: row.created_at as string,
+    updatedAt: row.updated_at as string,
+  };
 }
 
 export default function KitchenPage() {
@@ -31,54 +29,43 @@ export default function KitchenPage() {
   const [activeTab, setActiveTab] = useState<TabType>("active");
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
 
-  useEffect(() => {
-    // orderByを外してJS側でソート（複合インデックス不要）
-    const activeQ = query(
-      collection(db, "orders"),
-      where("status", "in", ["pending", "preparing"])
-    );
+  const fetchOrders = useCallback(async () => {
+    const { data: activeData } = await supabase
+      .from("orders")
+      .select("*")
+      .in("status", ["pending", "preparing"])
+      .order("created_at", { ascending: true });
 
-    const servedQ = query(
-      collection(db, "orders"),
-      where("status", "==", "served")
-    );
+    const { data: servedData } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("status", "served")
+      .order("updated_at", { ascending: false })
+      .limit(20);
 
-    const unsubActive = onSnapshot(activeQ, (snapshot) => {
-      const activeOrders = snapshot.docs
-        .map((doc) => ({ id: doc.id, ...doc.data() })) as (Order & { id: string })[];
+    const active = (activeData ?? []).map(toOrder);
+    const served = (servedData ?? []).map(toOrder);
 
-      // JS側で古い順にソート
-      activeOrders.sort((a, b) => toMs(a.createdAt) - toMs(b.createdAt));
-
-      setOrders((prev) => {
-        const servedOrders = prev.filter((o) => o.status === "served");
-        return [...activeOrders, ...servedOrders];
-      });
-      setLastUpdated(new Date());
-      setLoading(false);
-    });
-
-    const unsubServed = onSnapshot(servedQ, (snapshot) => {
-      const servedOrders = snapshot.docs
-        .map((doc) => ({ id: doc.id, ...doc.data() })) as (Order & { id: string })[];
-
-      // JS側で新しい順にソートして直近20件
-      servedOrders.sort((a, b) => toMs(b.updatedAt) - toMs(a.updatedAt));
-      const recent = servedOrders.slice(0, 20);
-
-      setOrders((prev) => {
-        const activeOrders = prev.filter(
-          (o) => o.status === "pending" || o.status === "preparing"
-        );
-        return [...activeOrders, ...recent];
-      });
-    });
-
-    return () => {
-      unsubActive();
-      unsubServed();
-    };
+    setOrders([...active, ...served]);
+    setLastUpdated(new Date());
+    setLoading(false);
   }, []);
+
+  useEffect(() => {
+    fetchOrders();
+
+    // Realtime でオーダー変更を監視
+    const channel = supabase
+      .channel("kitchen-orders")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "orders" },
+        () => { fetchOrders(); }
+      )
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [fetchOrders]);
 
   const handleStatusChange = useCallback(
     async (orderId: string, newStatus: OrderStatus) => {
@@ -199,7 +186,6 @@ export default function KitchenPage() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pb-8">
-              {/* 未対応を先に表示 */}
               {activeOrders
                 .sort((a, b) => {
                   if (a.status === "pending" && b.status !== "pending") return -1;

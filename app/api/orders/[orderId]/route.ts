@@ -1,11 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/firebase";
-import {
-  doc,
-  getDoc,
-  updateDoc,
-  Timestamp,
-} from "firebase/firestore";
+import { supabase } from "@/lib/supabase";
 import { OrderStatus } from "@/lib/types";
 
 // GET /api/orders/[orderId] - 注文詳細取得
@@ -15,19 +9,27 @@ export async function GET(
 ) {
   try {
     const { orderId } = await params;
-    const docRef = doc(db, "orders", orderId);
-    const snapshot = await getDoc(docRef);
+    const { data, error } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("id", orderId)
+      .single();
 
-    if (!snapshot.exists()) {
+    if (error || !data) {
       return NextResponse.json({ error: "注文が見つかりません" }, { status: 404 });
     }
 
-    const data = snapshot.data();
     return NextResponse.json({
-      id: snapshot.id,
-      ...data,
-      createdAt: data.createdAt?.toDate?.()?.toISOString() ?? null,
-      updatedAt: data.updatedAt?.toDate?.()?.toISOString() ?? null,
+      id: data.id,
+      tableId: data.table_id,
+      tableNumber: data.table_number,
+      items: data.items,
+      totalAmount: data.total_amount,
+      status: data.status,
+      notes: data.notes,
+      itemsDone: data.items_done,
+      createdAt: data.created_at,
+      updatedAt: data.updated_at,
     });
   } catch (error) {
     console.error("注文詳細取得エラー:", error);
@@ -45,8 +47,7 @@ export async function PATCH(
     const body = await req.json();
     const { status, itemsDone } = body as { status?: OrderStatus; itemsDone?: Record<string, number> };
 
-    const docRef = doc(db, "orders", orderId);
-    const updateData: Record<string, unknown> = { updatedAt: Timestamp.now() };
+    const updateData: Record<string, unknown> = {};
 
     if (status !== undefined) {
       const validStatuses: OrderStatus[] = ["pending", "preparing", "served"];
@@ -57,11 +58,16 @@ export async function PATCH(
     }
 
     if (itemsDone !== undefined) {
-      updateData.itemsDone = itemsDone;
+      updateData.items_done = itemsDone;
     }
 
-    await updateDoc(docRef, updateData);
-    return NextResponse.json({ id: orderId, ...updateData });
+    const { error } = await supabase
+      .from("orders")
+      .update(updateData)
+      .eq("id", orderId);
+
+    if (error) throw error;
+    return NextResponse.json({ id: orderId, ...body });
   } catch (error) {
     console.error("注文ステータス更新エラー:", error);
     return NextResponse.json({ error: "ステータスの更新に失敗しました" }, { status: 500 });

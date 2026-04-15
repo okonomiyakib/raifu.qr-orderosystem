@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { db } from "@/lib/firebase";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { supabase } from "@/lib/supabase";
 import { AppSettings } from "@/lib/types";
 import { DEFAULT_TAX_SETTINGS } from "@/lib/tax";
 
@@ -12,18 +11,19 @@ const DEFAULT_SETTINGS: AppSettings = {
 // GET /api/settings
 export async function GET() {
   try {
-    const snap = await getDoc(doc(db, "settings", "app"));
-    if (!snap.exists()) {
-      return NextResponse.json(DEFAULT_SETTINGS);
-    }
-    // デフォルト値とマージ（新フィールド追加時の後方互換）
-    const data = snap.data() as Partial<AppSettings>;
+    const { data } = await supabase
+      .from("app_settings")
+      .select("*")
+      .limit(1)
+      .single();
+
+    if (!data) return NextResponse.json(DEFAULT_SETTINGS);
+
     return NextResponse.json({
       tax: { ...DEFAULT_TAX_SETTINGS, ...data.tax },
       categories: data.categories ?? DEFAULT_SETTINGS.categories,
     });
-  } catch (error) {
-    console.error("設定取得エラー:", error);
+  } catch {
     return NextResponse.json(DEFAULT_SETTINGS);
   }
 }
@@ -32,17 +32,28 @@ export async function GET() {
 export async function PATCH(req: Request) {
   try {
     const body = await req.json() as Partial<AppSettings>;
-    const snap = await getDoc(doc(db, "settings", "app"));
-    const current = snap.exists()
-      ? (snap.data() as Partial<AppSettings>)
+
+    const { data: current } = await supabase
+      .from("app_settings")
+      .select("*")
+      .limit(1)
+      .single();
+
+    const currentSettings = current
+      ? { tax: current.tax, categories: current.categories }
       : DEFAULT_SETTINGS;
 
     const updated: AppSettings = {
-      tax: { ...DEFAULT_TAX_SETTINGS, ...current.tax, ...body.tax },
-      categories: body.categories ?? current.categories ?? DEFAULT_SETTINGS.categories,
+      tax: { ...DEFAULT_TAX_SETTINGS, ...currentSettings.tax, ...body.tax },
+      categories: body.categories ?? currentSettings.categories ?? DEFAULT_SETTINGS.categories,
     };
 
-    await setDoc(doc(db, "settings", "app"), updated);
+    if (current) {
+      await supabase.from("app_settings").update(updated).eq("id", current.id);
+    } else {
+      await supabase.from("app_settings").insert(updated);
+    }
+
     return NextResponse.json(updated);
   } catch (error) {
     console.error("設定更新エラー:", error);

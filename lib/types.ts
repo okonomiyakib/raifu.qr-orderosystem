@@ -1,5 +1,3 @@
-import { Timestamp } from "firebase/firestore";
-
 export type OrderStatus = "pending" | "preparing" | "served";
 export type TaxType = "standard" | "reduced"; // 標準10% / 軽減8%
 export type DisplayMode = "included" | "excluded";  // 税込 / 税抜
@@ -52,8 +50,8 @@ export interface Order {
   status: OrderStatus;
   notes: string;
   itemsDone: Record<string, number>; // 各品目の提供済み数 { "0": 2, "1": 1 }
-  createdAt: Timestamp | Date;
-  updatedAt: Timestamp | Date;
+  createdAt: string | Date;
+  updatedAt: string | Date;
 }
 
 export interface OrderWithId extends Order {
