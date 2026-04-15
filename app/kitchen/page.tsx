@@ -52,10 +52,7 @@ export default function KitchenPage() {
       .order("updated_at", { ascending: false })
       .limit(20);
 
-    const active = (activeData ?? []).map(toOrder);
-    const served = (servedData ?? []).map(toOrder);
-
-    setOrders([...active, ...served]);
+    setOrders([...(activeData ?? []).map(toOrder), ...(servedData ?? []).map(toOrder)]);
     setLastUpdated(new Date());
     setLoading(false);
   }, []);
@@ -75,7 +72,6 @@ export default function KitchenPage() {
       createdAt: row.created_at,
     }));
 
-    // 新しい呼び出しがあったらトースト通知
     setCalls((prev) => {
       const prevIds = new Set(prev.map((c) => c.id));
       newCalls.forEach((c) => {
@@ -94,31 +90,34 @@ export default function KitchenPage() {
     fetchOrders();
     fetchCalls();
 
+    // 他端末との同期用（自端末はOptimistic Updateで即時反映）
     const channel = supabase
       .channel("kitchen-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => {
-        fetchOrders();
-      })
-      .on("postgres_changes", { event: "*", schema: "public", table: "calls" }, () => {
-        fetchCalls();
-      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, fetchOrders)
+      .on("postgres_changes", { event: "*", schema: "public", table: "calls" }, fetchCalls)
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
   }, [fetchOrders, fetchCalls]);
 
+  // 呼び出し対応：即時削除してからAPI
   const handleRespondCall = async (callId: string, tableNumber: number) => {
+    setCalls((prev) => prev.filter((c) => c.id !== callId));
     try {
       await fetch(`/api/calls/${callId}`, { method: "PATCH" });
       toast.success(`テーブル ${tableNumber} の呼び出しに対応しました`);
-      await fetchCalls();
     } catch {
+      await fetchCalls();
       toast.error("更新に失敗しました");
     }
   };
 
+  // ステータス更新：即時反映してからAPI
   const handleStatusChange = useCallback(
     async (orderId: string, newStatus: OrderStatus) => {
+      setOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, status: newStatus } : o))
+      );
       try {
         const res = await fetch(`/api/orders/${orderId}`, {
           method: "PATCH",
@@ -126,7 +125,6 @@ export default function KitchenPage() {
           body: JSON.stringify({ status: newStatus }),
         });
         if (!res.ok) throw new Error();
-
         const statusLabel: Record<OrderStatus, string> = {
           pending: "未対応",
           preparing: "調理中",
@@ -134,14 +132,19 @@ export default function KitchenPage() {
         };
         toast.success(`ステータスを「${statusLabel[newStatus]}」に更新しました`);
       } catch {
+        await fetchOrders();
         toast.error("ステータスの更新に失敗しました");
       }
     },
-    []
+    [fetchOrders]
   );
 
+  // 品目完了：即時反映してからAPI
   const handleItemDoneChange = useCallback(
     async (orderId: string, itemsDone: Record<string, number>) => {
+      setOrders((prev) =>
+        prev.map((o) => (o.id === orderId ? { ...o, itemsDone } : o))
+      );
       try {
         await fetch(`/api/orders/${orderId}`, {
           method: "PATCH",
@@ -149,10 +152,11 @@ export default function KitchenPage() {
           body: JSON.stringify({ itemsDone }),
         });
       } catch {
+        await fetchOrders();
         toast.error("更新に失敗しました");
       }
     },
-    []
+    [fetchOrders]
   );
 
   const activeOrders = orders.filter(
@@ -175,7 +179,6 @@ export default function KitchenPage() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-      {/* ヘッダー */}
       <header className="bg-gray-800 px-4 py-4 shadow-lg">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -187,7 +190,6 @@ export default function KitchenPage() {
               </p>
             </div>
           </div>
-
           <div className="flex gap-3">
             <div className="text-center bg-red-900/50 border border-red-600 rounded-xl px-4 py-2">
               <p className="text-2xl font-black text-red-400">{pendingCount}</p>
@@ -201,7 +203,7 @@ export default function KitchenPage() {
         </div>
       </header>
 
-      {/* 呼び出し通知エリア */}
+      {/* 呼び出し通知 */}
       {calls.length > 0 && (
         <div className="max-w-6xl mx-auto px-4 pt-4">
           <div className="bg-red-900/60 border border-red-500 rounded-xl p-3">
@@ -237,9 +239,7 @@ export default function KitchenPage() {
           <button
             onClick={() => setActiveTab("active")}
             className={`px-5 py-2 rounded-full font-semibold text-sm transition-colors ${
-              activeTab === "active"
-                ? "bg-orange-500 text-white"
-                : "bg-gray-700 text-gray-300"
+              activeTab === "active" ? "bg-orange-500 text-white" : "bg-gray-700 text-gray-300"
             }`}
           >
             対応中 ({activeOrders.length})
@@ -247,9 +247,7 @@ export default function KitchenPage() {
           <button
             onClick={() => setActiveTab("served")}
             className={`px-5 py-2 rounded-full font-semibold text-sm transition-colors ${
-              activeTab === "served"
-                ? "bg-green-600 text-white"
-                : "bg-gray-700 text-gray-300"
+              activeTab === "served" ? "bg-green-600 text-white" : "bg-gray-700 text-gray-300"
             }`}
           >
             提供済 ({servedOrders.length})
