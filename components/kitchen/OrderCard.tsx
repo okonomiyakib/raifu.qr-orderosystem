@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Order, OrderStatus } from "@/lib/types";
 
 const STATUS_BADGE: Record<OrderStatus, string> = {
@@ -22,8 +22,16 @@ interface OrderCardProps {
 }
 
 export function OrderCard({ order, onStatusChange, onItemDoneChange }: OrderCardProps) {
-  const itemsDone: Record<string, number> = order.itemsDone ?? {};
+  // ローカル状態で即時反映
+  const [localItemsDone, setLocalItemsDone] = useState<Record<string, number>>(order.itemsDone ?? {});
+  const [localStatus, setLocalStatus] = useState<OrderStatus>(order.status);
   const [loading, setLoading] = useState(false);
+
+  // Realtimeで親が更新されたら同期
+  useEffect(() => {
+    setLocalItemsDone(order.itemsDone ?? {});
+    setLocalStatus(order.status);
+  }, [order.itemsDone, order.status]);
 
   const createdAt =
     order.createdAt instanceof Date
@@ -37,41 +45,40 @@ export function OrderCard({ order, onStatusChange, onItemDoneChange }: OrderCard
     minute: "2-digit",
   });
 
-  // 全品目の合計数と提供済み合計数
   const totalAll = order.items.reduce((sum, item) => sum + item.quantity, 0);
-  const doneAll = order.items.reduce((sum, _, idx) => sum + (itemsDone[String(idx)] ?? 0), 0);
+  const doneAll = order.items.reduce((sum, _, idx) => sum + (localItemsDone[String(idx)] ?? 0), 0);
   const allServed = doneAll === totalAll;
 
   const cardColor =
-    order.status === "served"
+    localStatus === "served"
       ? "bg-green-100 border-green-400 border-2"
       : doneAll > 0
       ? "bg-yellow-100 border-yellow-400 border-2"
       : "bg-red-100 border-red-400 border-2";
 
   const updateCount = async (idx: number, delta: number) => {
-    if (order.status === "served" || loading) return;
+    if (localStatus === "served" || loading) return;
     setLoading(true);
 
-    const current = itemsDone[idx] ?? 0;
+    const current = localItemsDone[String(idx)] ?? 0;
     const max = order.items[idx].quantity;
     const newCount = Math.min(max, Math.max(0, current + delta));
+    const newDone: Record<string, number> = { ...localItemsDone, [String(idx)]: newCount };
 
-    const newDone: Record<string, number> = { ...itemsDone, [String(idx)]: newCount };
+    // 即時UI反映
+    setLocalItemsDone(newDone);
+
+    const newDoneAll = order.items.reduce((sum, _, i) => sum + (newDone[String(i)] ?? 0), 0);
+    const willBeServed = order.items.every((item, i) => (newDone[String(i)] ?? 0) >= item.quantity);
+
     await onItemDoneChange(order.id, newDone);
 
-    // 1品でも提供されたら「提供中」に
-    const newDoneAll = order.items.reduce((sum, _, i) => sum + (newDone[String(i)] ?? 0), 0);
-    if (order.status === "pending" && newDoneAll > 0) {
-      await onStatusChange(order.id, "preparing");
-    }
-
-    // 全品提供完了 → 自動で提供済
-    const newTotalDone = order.items.reduce((sum, item, i) => {
-      return (newDone[String(i)] ?? 0) >= item.quantity ? sum + 1 : sum;
-    }, 0);
-    if (newTotalDone === order.items.length) {
+    if (willBeServed) {
+      setLocalStatus("served");
       await onStatusChange(order.id, "served");
+    } else if (localStatus === "pending" && newDoneAll > 0) {
+      setLocalStatus("preparing");
+      await onStatusChange(order.id, "preparing");
     }
 
     setLoading(false);
@@ -82,6 +89,8 @@ export function OrderCard({ order, onStatusChange, onItemDoneChange }: OrderCard
     setLoading(true);
     const allDone: Record<string, number> = {};
     order.items.forEach((item, idx) => { allDone[idx] = item.quantity; });
+    setLocalItemsDone(allDone);
+    setLocalStatus("served");
     await onItemDoneChange(order.id, allDone);
     await onStatusChange(order.id, "served");
     setLoading(false);
@@ -95,15 +104,15 @@ export function OrderCard({ order, onStatusChange, onItemDoneChange }: OrderCard
           <span className="text-2xl font-black text-gray-800">
             テーブル {order.tableNumber}
           </span>
-          <span className={`text-xs px-2 py-1 rounded-full font-bold ${STATUS_BADGE[order.status]}`}>
-            {STATUS_LABEL[order.status]}
+          <span className={`text-xs px-2 py-1 rounded-full font-bold ${STATUS_BADGE[localStatus]}`}>
+            {STATUS_LABEL[localStatus]}
           </span>
         </div>
         <span className="text-sm text-gray-500">{timeStr}</span>
       </div>
 
       {/* 全体進捗バー */}
-      {order.status !== "served" && (
+      {localStatus !== "served" && (
         <div className="mb-3">
           <div className="flex justify-between text-xs text-gray-500 mb-1">
             <span>提供進捗</span>
@@ -121,7 +130,7 @@ export function OrderCard({ order, onStatusChange, onItemDoneChange }: OrderCard
       {/* 品目一覧 */}
       <div className="space-y-2 mb-3">
         {order.items.map((item, idx) => {
-          const served = itemsDone[String(idx)] ?? 0;
+          const served = localItemsDone[String(idx)] ?? 0;
           const total = item.quantity;
           const itemDone = served >= total;
 
@@ -130,7 +139,6 @@ export function OrderCard({ order, onStatusChange, onItemDoneChange }: OrderCard
               key={idx}
               className={`rounded-xl px-3 py-2.5 ${itemDone ? "bg-green-200" : "bg-white/70"}`}
             >
-              {/* 品目名と完了マーク */}
               <div className="flex items-center justify-between mb-1.5">
                 <div className="flex items-center gap-1.5 min-w-0">
                   <span className={`text-lg font-black leading-none ${itemDone ? "text-green-600" : "text-gray-300"}`}>
@@ -140,14 +148,12 @@ export function OrderCard({ order, onStatusChange, onItemDoneChange }: OrderCard
                     {item.name}
                   </span>
                 </div>
-                {/* 提供済み数 / 注文数 */}
                 <span className={`text-sm font-bold flex-shrink-0 ml-2 ${itemDone ? "text-green-600" : "text-gray-700"}`}>
                   {served} / {total} 品
                 </span>
               </div>
 
-              {/* ＋／－ボタン */}
-              {order.status !== "served" && (
+              {localStatus !== "served" && (
                 <div className="flex items-center justify-end gap-3">
                   <button
                     onClick={() => updateCount(idx, -1)}
@@ -179,7 +185,7 @@ export function OrderCard({ order, onStatusChange, onItemDoneChange }: OrderCard
       )}
 
       {/* 全品まとめて完了ボタン */}
-      {order.status !== "served" && !allServed && (
+      {localStatus !== "served" && !allServed && (
         <button
           onClick={handleAllServed}
           disabled={loading}

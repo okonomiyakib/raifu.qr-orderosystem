@@ -111,6 +111,7 @@ export default function KitchenPage() {
     try {
       await fetch(`/api/calls/${callId}`, { method: "PATCH" });
       toast.success(`テーブル ${tableNumber} の呼び出しに対応しました`);
+      await fetchCalls();
     } catch {
       toast.error("更新に失敗しました");
     }
