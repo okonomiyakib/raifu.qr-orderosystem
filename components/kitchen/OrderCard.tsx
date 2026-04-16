@@ -3,18 +3,6 @@
 import { useState } from "react";
 import { Order, OrderStatus } from "@/lib/types";
 
-const STATUS_BADGE: Record<OrderStatus, string> = {
-  pending: "bg-red-500 text-white",
-  preparing: "bg-yellow-500 text-white",
-  served: "bg-green-500 text-white",
-};
-
-const STATUS_LABEL: Record<OrderStatus, string> = {
-  pending: "未対応",
-  preparing: "提供中",
-  served: "提供済",
-};
-
 interface OrderCardProps {
   order: Order & { id: string };
   onStatusChange: (orderId: string, newStatus: OrderStatus) => void;
@@ -33,21 +21,32 @@ export function OrderCard({ order, onStatusChange, onItemDoneChange }: OrderCard
       ? new Date(order.createdAt)
       : new Date();
 
-  const timeStr = createdAt.toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" });
+  const timeStr = createdAt.toLocaleTimeString("ja-JP", {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
   const totalAll = order.items.reduce((sum, item) => sum + item.quantity, 0);
-  const doneAll = order.items.reduce((sum, _, idx) => sum + (itemsDone[String(idx)] ?? 0), 0);
+  const doneAll = order.items.reduce(
+    (sum, _, idx) => sum + (itemsDone[String(idx)] ?? 0),
+    0
+  );
   const allServed = doneAll === totalAll;
+  const progressPct = totalAll > 0 ? (doneAll / totalAll) * 100 : 0;
 
-  const cardColor =
-    order.status === "served"
-      ? "bg-green-100 border-green-400 border-2"
-      : doneAll > 0
-      ? "bg-yellow-100 border-yellow-400 border-2"
-      : "bg-red-100 border-red-400 border-2";
+  // ステータス別カードスタイル
+  const isPending = order.status === "pending";
+  const isPreparing = order.status === "preparing";
+  const isServed = order.status === "served";
+
+  const cardClass = isPending
+    ? "bg-red-50 border-red-500 border-4 shadow-xl shadow-red-200"
+    : isPreparing
+    ? "bg-yellow-50 border-yellow-500 border-4 shadow-md"
+    : "bg-gray-100 border-gray-300 border-2 opacity-80";
 
   const updateCount = async (idx: number, delta: number) => {
-    if (order.status === "served" || loading) return;
+    if (isServed || loading) return;
     setLoading(true);
 
     const current = itemsDone[String(idx)] ?? 0;
@@ -55,10 +54,14 @@ export function OrderCard({ order, onStatusChange, onItemDoneChange }: OrderCard
     const newCount = Math.min(max, Math.max(0, current + delta));
     const newDone: Record<string, number> = { ...itemsDone, [String(idx)]: newCount };
 
-    const newDoneAll = order.items.reduce((sum, _, i) => sum + (newDone[String(i)] ?? 0), 0);
-    const willBeServed = order.items.every((item, i) => (newDone[String(i)] ?? 0) >= item.quantity);
+    const newDoneAll = order.items.reduce(
+      (sum, _, i) => sum + (newDone[String(i)] ?? 0),
+      0
+    );
+    const willBeServed = order.items.every(
+      (item, i) => (newDone[String(i)] ?? 0) >= item.quantity
+    );
 
-    // 親のoptimistic updateで即時反映
     await onItemDoneChange(order.id, newDone);
 
     if (willBeServed) {
@@ -74,78 +77,117 @@ export function OrderCard({ order, onStatusChange, onItemDoneChange }: OrderCard
     if (loading) return;
     setLoading(true);
     const allDone: Record<string, number> = {};
-    order.items.forEach((item, idx) => { allDone[String(idx)] = item.quantity; });
+    order.items.forEach((item, idx) => {
+      allDone[String(idx)] = item.quantity;
+    });
     await onItemDoneChange(order.id, allDone);
     await onStatusChange(order.id, "served");
     setLoading(false);
   };
 
   return (
-    <div className={`rounded-2xl p-4 ${cardColor} relative`}>
-      {/* ヘッダー */}
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <span className="text-2xl font-black text-gray-800">テーブル {order.tableNumber}</span>
-          <span className={`text-xs px-2 py-1 rounded-full font-bold ${STATUS_BADGE[order.status]}`}>
-            {STATUS_LABEL[order.status]}
-          </span>
-        </div>
-        <span className="text-sm text-gray-500">{timeStr}</span>
-      </div>
+    <div className={`rounded-2xl relative ${cardClass}`}>
 
-      {/* 全体進捗バー */}
-      {order.status !== "served" && (
-        <div className="mb-3">
-          <div className="flex justify-between text-xs text-gray-500 mb-1">
-            <span>提供進捗</span>
-            <span className="font-bold text-gray-700">{doneAll} / {totalAll} 品</span>
-          </div>
-          <div className="w-full bg-gray-200 rounded-full h-2.5">
-            <div
-              className="bg-green-500 h-2.5 rounded-full transition-all duration-300"
-              style={{ width: `${totalAll > 0 ? (doneAll / totalAll) * 100 : 0}%` }}
-            />
-          </div>
-        </div>
+      {/* 新規注文のピンポン（pendingのみ） */}
+      {isPending && (
+        <span className="absolute -top-2.5 -right-2.5 flex h-6 w-6 z-10">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-500 opacity-75" />
+          <span className="relative inline-flex rounded-full h-6 w-6 bg-red-600" />
+        </span>
       )}
 
-      {/* 品目一覧 */}
-      <div className="space-y-2 mb-3">
+      {/* ===== ヘッダー ===== */}
+      <div className={`px-5 py-4 rounded-t-xl ${
+        isPending ? "bg-red-500" : isPreparing ? "bg-yellow-500" : "bg-gray-400"
+      }`}>
+        <div className="flex items-center justify-between">
+          {/* テーブル番号（大） */}
+          <div>
+            <p className="text-white text-sm font-bold opacity-80 leading-none mb-0.5">テーブル</p>
+            <p className="text-white text-5xl font-black leading-none">
+              {order.tableNumber}
+            </p>
+          </div>
+          {/* 状態 + 時刻 */}
+          <div className="text-right">
+            <span className="block text-white text-2xl font-black leading-none mb-1">
+              {isPending ? "未対応" : isPreparing ? "提供中" : "提供済"}
+            </span>
+            <span className="block text-white text-lg font-semibold opacity-90">
+              {timeStr}
+            </span>
+          </div>
+        </div>
+
+        {/* 進捗バー（提供済以外） */}
+        {!isServed && (
+          <div className="mt-3">
+            <div className="flex justify-between text-white text-base font-bold mb-1.5 opacity-90">
+              <span>提供進捗</span>
+              <span>{doneAll} / {totalAll} 品</span>
+            </div>
+            <div className="w-full bg-white/30 rounded-full h-5">
+              <div
+                className="bg-white h-5 rounded-full transition-all duration-300"
+                style={{ width: `${progressPct}%` }}
+              />
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ===== 品目一覧 ===== */}
+      <div className="px-4 pt-4 pb-3 space-y-3">
         {order.items.map((item, idx) => {
           const served = itemsDone[String(idx)] ?? 0;
           const total = item.quantity;
           const itemDone = served >= total;
 
           return (
-            <div key={idx} className={`rounded-xl px-3 py-2.5 ${itemDone ? "bg-green-200" : "bg-white/70"}`}>
-              <div className="flex items-center justify-between mb-1.5">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span className={`text-lg font-black leading-none ${itemDone ? "text-green-600" : "text-gray-300"}`}>
+            <div
+              key={idx}
+              className={`rounded-xl px-4 py-3 ${
+                itemDone ? "bg-green-200 border border-green-400" : "bg-white border border-gray-200"
+              }`}
+            >
+              {/* 商品名と進捗 */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2 min-w-0 flex-1">
+                  <span className={`text-2xl font-black flex-shrink-0 ${itemDone ? "text-green-600" : "text-gray-300"}`}>
                     {itemDone ? "✓" : "○"}
                   </span>
-                  <span className={`font-semibold text-base truncate ${itemDone ? "line-through text-gray-400" : "text-gray-800"}`}>
+                  <span className={`text-xl font-bold truncate ${
+                    itemDone ? "line-through text-gray-400" : "text-gray-900"
+                  }`}>
                     {item.name}
                   </span>
                 </div>
-                <span className={`text-sm font-bold flex-shrink-0 ml-2 ${itemDone ? "text-green-600" : "text-gray-700"}`}>
-                  {served} / {total} 品
+                <span className={`text-xl font-black flex-shrink-0 ml-3 ${
+                  itemDone ? "text-green-600" : "text-gray-800"
+                }`}>
+                  {served}<span className="text-base font-semibold text-gray-400">/{total}</span>
                 </span>
               </div>
 
-              {order.status !== "served" && (
-                <div className="flex items-center justify-end gap-3">
+              {/* −/＋ボタン（提供済は非表示） */}
+              {!isServed && (
+                <div className="flex items-center justify-end gap-4">
                   <button
                     onClick={() => updateCount(idx, -1)}
                     disabled={served === 0 || loading}
-                    className="w-9 h-9 rounded-full bg-gray-200 text-gray-600 text-xl font-bold flex items-center justify-center disabled:opacity-30 active:scale-95 transition-transform"
+                    className="w-14 h-14 rounded-full bg-gray-200 text-gray-700 text-3xl font-black flex items-center justify-center disabled:opacity-25 active:scale-90 transition-transform"
+                    aria-label="戻す"
                   >
                     －
                   </button>
-                  <span className="text-lg font-black text-gray-800 w-6 text-center">{served}</span>
+                  <span className="text-3xl font-black text-gray-900 w-10 text-center tabular-nums">
+                    {served}
+                  </span>
                   <button
                     onClick={() => updateCount(idx, 1)}
                     disabled={served === total || loading}
-                    className="w-9 h-9 rounded-full bg-green-500 text-white text-xl font-bold flex items-center justify-center disabled:opacity-30 active:scale-95 transition-transform"
+                    className="w-14 h-14 rounded-full bg-green-500 text-white text-3xl font-black flex items-center justify-center disabled:opacity-25 active:scale-90 transition-transform"
+                    aria-label="提供済み"
                   >
                     ＋
                   </button>
@@ -156,23 +198,26 @@ export function OrderCard({ order, onStatusChange, onItemDoneChange }: OrderCard
         })}
       </div>
 
-      {/* 備考 */}
+      {/* ===== 備考 ===== */}
       {order.notes && (
-        <div className="bg-white/60 rounded-lg px-3 py-2 text-sm text-gray-600 mb-3">
-          📝 {order.notes}
+        <div className="mx-4 mb-3 bg-orange-50 border border-orange-200 rounded-xl px-4 py-3">
+          <p className="text-base font-bold text-orange-800">📝 {order.notes}</p>
         </div>
       )}
 
-      {/* 全品まとめて完了ボタン */}
-      {order.status !== "served" && !allServed && (
-        <button
-          onClick={handleAllServed}
-          disabled={loading}
-          className="w-full py-2.5 rounded-xl text-sm font-bold text-white bg-gray-500 hover:bg-gray-600 transition-colors disabled:opacity-50 active:scale-95"
-        >
-          全品まとめて提供完了
-        </button>
+      {/* ===== 全品まとめて完了ボタン ===== */}
+      {!isServed && !allServed && (
+        <div className="px-4 pb-4">
+          <button
+            onClick={handleAllServed}
+            disabled={loading}
+            className="w-full py-4 rounded-xl text-lg font-black text-white bg-gray-600 hover:bg-gray-700 disabled:opacity-50 active:scale-95 transition-transform min-h-[56px]"
+          >
+            全品まとめて提供完了
+          </button>
+        </div>
       )}
+
     </div>
   );
 }

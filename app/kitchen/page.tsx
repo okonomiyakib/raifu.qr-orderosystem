@@ -190,61 +190,76 @@ export default function KitchenPage() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white">
-      <header className="bg-gray-800 px-4 py-4 shadow-lg">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">👨‍🍳</span>
-            <div>
-              <h1 className="text-xl font-bold">厨房ダッシュボード</h1>
-              <p className="text-xs text-gray-400">
-                最終更新: {lastUpdated.toLocaleTimeString("ja-JP")}
-              </p>
-            </div>
-            <button
-              onClick={async () => {
-                const supabase = createSupabaseBrowser();
-                await supabase.auth.signOut();
-                router.push("/login");
-                router.refresh();
-              }}
-              className="text-xs text-gray-400 hover:text-white border border-gray-600 px-3 py-1.5 rounded-lg"
-            >
-              ログアウト
-            </button>
+      {/* ===== ヘッダー ===== */}
+      <header className="bg-gray-900 border-b border-gray-700 px-4 py-3">
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
+
+          {/* タイトル + 最終更新 */}
+          <div>
+            <h1 className="text-2xl font-black text-white leading-none">厨房ダッシュボード</h1>
+            <p className="text-sm text-gray-400 mt-0.5">
+              更新: {lastUpdated.toLocaleTimeString("ja-JP")}
+            </p>
           </div>
-          <div className="flex gap-3">
-            <div className="text-center bg-red-900/50 border border-red-600 rounded-xl px-4 py-2">
-              <p className="text-2xl font-black text-red-400">{pendingCount}</p>
-              <p className="text-xs text-red-300">未対応</p>
+
+          {/* カウンター（大きく・一目瞭然） */}
+          <div className="flex gap-3 flex-1 justify-center">
+            <div className={`flex items-center gap-3 rounded-xl px-5 py-3 border-2 ${
+              pendingCount > 0
+                ? "bg-red-600 border-red-400 animate-pulse"
+                : "bg-red-900/30 border-red-900"
+            }`}>
+              <span className="text-4xl font-black text-white tabular-nums">{pendingCount}</span>
+              <span className="text-base font-bold text-red-200">未対応</span>
             </div>
-            <div className="text-center bg-yellow-900/50 border border-yellow-600 rounded-xl px-4 py-2">
-              <p className="text-2xl font-black text-yellow-400">{preparingCount}</p>
-              <p className="text-xs text-yellow-300">調理中</p>
+            <div className={`flex items-center gap-3 rounded-xl px-5 py-3 border-2 ${
+              preparingCount > 0
+                ? "bg-yellow-500 border-yellow-300"
+                : "bg-yellow-900/30 border-yellow-900"
+            }`}>
+              <span className="text-4xl font-black text-white tabular-nums">{preparingCount}</span>
+              <span className="text-base font-bold text-yellow-100">調理中</span>
             </div>
           </div>
+
+          {/* ログアウト */}
+          <button
+            onClick={async () => {
+              const supabase = createSupabaseBrowser();
+              await supabase.auth.signOut();
+              router.push("/login");
+              router.refresh();
+            }}
+            className="text-sm text-gray-400 hover:text-white border border-gray-600 px-4 py-2 rounded-lg flex-shrink-0"
+          >
+            ログアウト
+          </button>
         </div>
       </header>
 
-      {/* 呼び出し通知 */}
+      {/* ===== 呼び出し通知（大きく・目立つ） ===== */}
       {calls.length > 0 && (
         <div className="max-w-6xl mx-auto px-4 pt-4">
-          <div className="bg-red-900/60 border border-red-500 rounded-xl p-3">
-            <p className="text-red-300 text-xs font-bold mb-2 uppercase tracking-wide">
-              🔔 呼び出し ({calls.length}件)
+          <div className="bg-red-600 border-2 border-red-400 rounded-xl p-4">
+            <p className="text-white text-lg font-black mb-3">
+              🔔 スタッフ呼び出し（{calls.length}件）
             </p>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-3">
               {calls.map((call) => (
                 <div
                   key={call.id}
-                  className="flex items-center gap-2 bg-red-800/60 border border-red-600 rounded-lg px-3 py-2"
+                  className="flex items-center gap-3 bg-red-700 border border-red-400 rounded-xl px-4 py-3"
                 >
-                  <span className="font-bold text-white">テーブル {call.tableNumber}</span>
-                  <span className="text-red-300 text-xs">
-                    {new Date(call.createdAt).toLocaleTimeString("ja-JP", { hour: "2-digit", minute: "2-digit" })}
+                  <span className="text-white text-xl font-black">テーブル {call.tableNumber}</span>
+                  <span className="text-red-200 text-base">
+                    {new Date(call.createdAt).toLocaleTimeString("ja-JP", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
                   </span>
                   <button
                     onClick={() => handleRespondCall(call.id, call.tableNumber)}
-                    className="bg-red-500 hover:bg-red-400 text-white text-xs font-semibold px-2 py-1 rounded transition-colors"
+                    className="bg-white text-red-600 text-base font-black px-4 py-2 rounded-lg active:scale-95 transition-transform min-h-[44px]"
                   >
                     対応済み
                   </button>
@@ -255,21 +270,25 @@ export default function KitchenPage() {
         </div>
       )}
 
-      {/* タブ */}
+      {/* ===== タブ ===== */}
       <div className="max-w-6xl mx-auto px-4 pt-4">
-        <div className="flex gap-2 mb-4">
+        <div className="flex gap-3 mb-5">
           <button
             onClick={() => setActiveTab("active")}
-            className={`px-5 py-2 rounded-full font-semibold text-sm transition-colors ${
-              activeTab === "active" ? "bg-orange-500 text-white" : "bg-gray-700 text-gray-300"
+            className={`px-6 py-3 rounded-xl font-black text-lg transition-colors min-h-[52px] ${
+              activeTab === "active"
+                ? "bg-orange-500 text-white"
+                : "bg-gray-700 text-gray-300"
             }`}
           >
-            対応中 ({activeOrders.length})
+            対応中 {activeOrders.length > 0 && `(${activeOrders.length})`}
           </button>
           <button
             onClick={() => setActiveTab("served")}
-            className={`px-5 py-2 rounded-full font-semibold text-sm transition-colors ${
-              activeTab === "served" ? "bg-green-600 text-white" : "bg-gray-700 text-gray-300"
+            className={`px-6 py-3 rounded-xl font-black text-lg transition-colors min-h-[52px] ${
+              activeTab === "served"
+                ? "bg-green-600 text-white"
+                : "bg-gray-700 text-gray-300"
             }`}
           >
             提供済 ({servedOrders.length})
@@ -280,10 +299,10 @@ export default function KitchenPage() {
           activeOrders.length === 0 ? (
             <div className="text-center py-20 text-gray-500">
               <p className="text-5xl mb-4">🎉</p>
-              <p className="text-lg">対応中の注文はありません</p>
+              <p className="text-xl font-bold">対応中の注文はありません</p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 pb-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 pb-8">
               {activeOrders
                 .sort((a, b) => {
                   if (a.status === "pending" && b.status !== "pending") return -1;
