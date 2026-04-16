@@ -1,11 +1,18 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { getAuthenticatedStoreId, getStoreIdByTable } from "@/lib/get-store";
 
-// GET /api/calls - 未対応の呼び出し一覧
+// GET /api/calls - 未対応の呼び出し一覧（厨房用）
 export async function GET() {
+  const storeId = await getAuthenticatedStoreId();
+  if (!storeId) {
+    return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+  }
+
   const { data, error } = await supabase
     .from("calls")
     .select("*")
+    .eq("store_id", storeId)
     .eq("status", "waiting")
     .order("created_at", { ascending: true });
 
@@ -24,7 +31,7 @@ export async function GET() {
   );
 }
 
-// POST /api/calls - 呼び出し作成
+// POST /api/calls - 呼び出し作成（顧客用・認証不要）
 export async function POST(req: Request) {
   try {
     const { tableId, tableNumber } = await req.json();
@@ -32,9 +39,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "tableIdは必須です" }, { status: 400 });
     }
 
+    // テーブルからstoreIdを取得
+    const storeId = await getStoreIdByTable(tableId);
+
     const { data, error } = await supabase
       .from("calls")
-      .insert({ table_id: tableId, table_number: tableNumber, status: "waiting" })
+      .insert({ table_id: tableId, table_number: tableNumber, status: "waiting", store_id: storeId })
       .select()
       .single();
 

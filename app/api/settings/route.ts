@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { getAuthenticatedStoreId } from "@/lib/get-store";
 import { AppSettings } from "@/lib/types";
 import { DEFAULT_TAX_SETTINGS } from "@/lib/tax";
 
@@ -9,13 +10,19 @@ const DEFAULT_SETTINGS: AppSettings = {
 };
 
 // GET /api/settings
-export async function GET() {
+// 管理者: 認証してstoreIdで取得
+// 顧客: ?storeId=xxx で取得
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const queryStoreId = searchParams.get("storeId");
+
+  const authStoreId = await getAuthenticatedStoreId();
+  const storeId = authStoreId ?? queryStoreId;
+
   try {
-    const { data } = await supabase
-      .from("app_settings")
-      .select("*")
-      .limit(1)
-      .single();
+    let query = supabase.from("app_settings").select("*").limit(1);
+    if (storeId) query = query.eq("store_id", storeId);
+    const { data } = await query.single();
 
     if (!data) return NextResponse.json(DEFAULT_SETTINGS);
 
@@ -30,12 +37,18 @@ export async function GET() {
 
 // PATCH /api/settings
 export async function PATCH(req: Request) {
+  const storeId = await getAuthenticatedStoreId();
+  if (!storeId) {
+    return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+  }
+
   try {
     const body = await req.json() as Partial<AppSettings>;
 
     const { data: current } = await supabase
       .from("app_settings")
       .select("*")
+      .eq("store_id", storeId)
       .limit(1)
       .single();
 
@@ -51,7 +64,7 @@ export async function PATCH(req: Request) {
     if (current) {
       await supabase.from("app_settings").update(updated).eq("id", current.id);
     } else {
-      await supabase.from("app_settings").insert(updated);
+      await supabase.from("app_settings").insert({ ...updated, store_id: storeId });
     }
 
     return NextResponse.json(updated);

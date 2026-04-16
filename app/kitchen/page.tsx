@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
+import { createSupabaseBrowser } from "@/lib/supabase-browser";
 import { Order, OrderStatus } from "@/lib/types";
 import { OrderCard } from "@/components/kitchen/OrderCard";
 import toast from "react-hot-toast";
@@ -32,6 +34,7 @@ function toOrder(row: Record<string, unknown>): Order & { id: string } {
 }
 
 export default function KitchenPage() {
+  const router = useRouter();
   const [orders, setOrders] = useState<(Order & { id: string })[]>([]);
   const [calls, setCalls] = useState<Call[]>([]);
   const [loading, setLoading] = useState(true);
@@ -197,6 +200,17 @@ export default function KitchenPage() {
                 最終更新: {lastUpdated.toLocaleTimeString("ja-JP")}
               </p>
             </div>
+            <button
+              onClick={async () => {
+                const supabase = createSupabaseBrowser();
+                await supabase.auth.signOut();
+                router.push("/login");
+                router.refresh();
+              }}
+              className="text-xs text-gray-400 hover:text-white border border-gray-600 px-3 py-1.5 rounded-lg"
+            >
+              ログアウト
+            </button>
           </div>
           <div className="flex gap-3">
             <div className="text-center bg-red-900/50 border border-red-600 rounded-xl px-4 py-2">

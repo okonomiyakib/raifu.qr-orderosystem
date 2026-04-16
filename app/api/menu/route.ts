@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { getAuthenticatedStoreId } from "@/lib/get-store";
 import { MenuItem } from "@/lib/types";
 
 function toMenuItem(row: Record<string, unknown>): MenuItem {
@@ -17,11 +18,20 @@ function toMenuItem(row: Record<string, unknown>): MenuItem {
 }
 
 // GET /api/menu - メニュー一覧取得
-export async function GET() {
-  const { data, error } = await supabase
-    .from("menu_items")
-    .select("*")
-    .order("sort_order", { ascending: true });
+// 管理者: 認証してstoreIdで絞り込み
+// 顧客: ?storeId=xxx で絞り込み
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  const queryStoreId = searchParams.get("storeId");
+
+  // 認証ユーザーのstoreIdを優先
+  const authStoreId = await getAuthenticatedStoreId();
+  const storeId = authStoreId ?? queryStoreId;
+
+  let query = supabase.from("menu_items").select("*").order("sort_order", { ascending: true });
+  if (storeId) query = query.eq("store_id", storeId);
+
+  const { data, error } = await query;
 
   if (error) {
     console.error("メニュー取得エラー:", error);
@@ -33,6 +43,11 @@ export async function GET() {
 
 // POST /api/menu - メニュー追加（管理者用）
 export async function POST(req: Request) {
+  const storeId = await getAuthenticatedStoreId();
+  if (!storeId) {
+    return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+  }
+
   try {
     const body = await req.json();
     const { data, error } = await supabase
@@ -46,6 +61,7 @@ export async function POST(req: Request) {
         image_url: body.imageUrl ?? "",
         is_available: true,
         sort_order: body.sortOrder ?? 99,
+        store_id: storeId,
       })
       .select()
       .single();

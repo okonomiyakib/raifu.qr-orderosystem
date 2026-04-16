@@ -1,17 +1,38 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Table } from "@/lib/types";
 import { QRCodeGenerator } from "@/components/admin/QRCodeGenerator";
+import { createSupabaseBrowser } from "@/lib/supabase-browser";
 import toast from "react-hot-toast";
 import Link from "next/link";
 
 export default function AdminPage() {
+  const router = useRouter();
   const [tables, setTables] = useState<Table[]>([]);
   const [loading, setLoading] = useState(true);
   const [seeding, setSeeding] = useState(false);
   const [newTableNum, setNewTableNum] = useState("");
   const [adding, setAdding] = useState(false);
+  const [storeName, setStoreName] = useState<string | null>(null);
+
+  useEffect(() => {
+    const supabase = createSupabaseBrowser();
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) return;
+      const { data: store } = await supabase
+        .from("stores")
+        .select("name")
+        .eq("owner_id", user.id)
+        .single();
+      if (!store) {
+        router.push("/admin/setup");
+      } else {
+        setStoreName(store.name);
+      }
+    });
+  }, [router]);
 
   const appUrl =
     typeof window !== "undefined"
@@ -89,9 +110,9 @@ export default function AdminPage() {
         <div className="max-w-4xl mx-auto flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">管理画面</h1>
-            <p className="text-sm text-gray-500">QRコード発行・テーブル管理</p>
+            <p className="text-sm text-gray-500">{storeName ?? "QRコード発行・テーブル管理"}</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap">
             <Link
               href="/admin/settings"
               className="px-3 py-2 border border-gray-300 text-gray-600 rounded-xl text-sm font-medium"
@@ -110,6 +131,17 @@ export default function AdminPage() {
             >
               厨房画面
             </Link>
+            <button
+              onClick={async () => {
+                const supabase = createSupabaseBrowser();
+                await supabase.auth.signOut();
+                router.push("/login");
+                router.refresh();
+              }}
+              className="px-4 py-2 border border-red-200 text-red-500 rounded-xl text-sm font-medium hover:bg-red-50"
+            >
+              ログアウト
+            </button>
           </div>
         </div>
       </header>

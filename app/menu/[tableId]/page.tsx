@@ -39,9 +39,11 @@ export default function MenuPage() {
       setTable(tableId, tableData.tableNumber);
       setTableNumberState(tableData.tableNumber);
 
+      // storeId をクエリパラメータで渡して店舗データのみ取得
+      const storeParam = tableData.storeId ? `?storeId=${tableData.storeId}` : "";
       const [menuRes, settingsRes] = await Promise.all([
-        fetch("/api/menu"),
-        fetch("/api/settings"),
+        fetch(`/api/menu${storeParam}`),
+        fetch(`/api/settings${storeParam}`),
       ]);
       const menuData: MenuItem[] = await menuRes.json();
       const settingsData = await settingsRes.json();

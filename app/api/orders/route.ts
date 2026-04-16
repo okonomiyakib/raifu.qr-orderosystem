@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { getAuthenticatedStoreId, getStoreIdByTable } from "@/lib/get-store";
 
 function toOrder(row: Record<string, unknown>) {
   return {
@@ -16,8 +17,13 @@ function toOrder(row: Record<string, unknown>) {
   };
 }
 
-// GET /api/orders - 注文一覧取得（厨房用）
+// GET /api/orders - 注文一覧取得（厨房・管理者用）
 export async function GET(req: Request) {
+  const storeId = await getAuthenticatedStoreId();
+  if (!storeId) {
+    return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+  }
+
   const { searchParams } = new URL(req.url);
   const status = searchParams.get("status");
   const tableId = searchParams.get("tableId");
@@ -25,6 +31,7 @@ export async function GET(req: Request) {
   let query = supabase
     .from("orders")
     .select("*")
+    .eq("store_id", storeId)
     .order("created_at", { ascending: false });
 
   if (status) query = query.eq("status", status);
@@ -40,7 +47,7 @@ export async function GET(req: Request) {
   return NextResponse.json((data ?? []).map(toOrder));
 }
 
-// POST /api/orders - 新規注文作成
+// POST /api/orders - 新規注文作成（顧客用・認証不要）
 export async function POST(req: Request) {
   try {
     const body = await req.json();
@@ -52,6 +59,9 @@ export async function POST(req: Request) {
         { status: 400 }
       );
     }
+
+    // テーブルからstoreIdを取得
+    const storeId = await getStoreIdByTable(tableId);
 
     const totalAmount = items.reduce(
       (sum: number, item: { price: number; quantity: number }) =>
@@ -69,6 +79,7 @@ export async function POST(req: Request) {
         status: "pending",
         notes: notes || "",
         items_done: {},
+        store_id: storeId,
       })
       .select()
       .single();

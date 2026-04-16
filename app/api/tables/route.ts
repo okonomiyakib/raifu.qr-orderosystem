@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { getAuthenticatedStoreId } from "@/lib/get-store";
 import { Table } from "@/lib/types";
 
 function toTable(row: Record<string, unknown>): Table {
@@ -12,11 +13,17 @@ function toTable(row: Record<string, unknown>): Table {
   };
 }
 
-// GET /api/tables - テーブル一覧取得
+// GET /api/tables - テーブル一覧取得（管理者用）
 export async function GET() {
+  const storeId = await getAuthenticatedStoreId();
+  if (!storeId) {
+    return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+  }
+
   const { data, error } = await supabase
     .from("tables")
     .select("*")
+    .eq("store_id", storeId)
     .order("table_number", { ascending: true });
 
   if (error) {
@@ -29,6 +36,11 @@ export async function GET() {
 
 // POST /api/tables - テーブル追加（管理者用）
 export async function POST(req: Request) {
+  const storeId = await getAuthenticatedStoreId();
+  if (!storeId) {
+    return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+  }
+
   try {
     const body = await req.json();
     const { data, error } = await supabase
@@ -38,6 +50,7 @@ export async function POST(req: Request) {
         name: body.name || `テーブル${body.tableNumber}`,
         is_active: true,
         capacity: body.capacity || 4,
+        store_id: storeId,
       })
       .select()
       .single();

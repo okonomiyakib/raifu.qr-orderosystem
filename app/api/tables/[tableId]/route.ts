@@ -24,6 +24,7 @@ export async function GET(
       name: data.name,
       isActive: data.is_active,
       capacity: data.capacity,
+      storeId: data.store_id,
     });
   } catch (error) {
     console.error("テーブル取得エラー:", error);
