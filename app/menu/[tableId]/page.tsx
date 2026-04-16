@@ -121,35 +121,36 @@ export default function MenuPage() {
   return (
     <div className="min-h-screen bg-gray-50 pb-36">
       <header className="sticky top-0 z-40 bg-white shadow-sm">
-        <div className="max-w-lg mx-auto px-4 py-4 flex items-center justify-between">
+        <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <div>
             <h1 className="text-xl font-bold text-gray-800">メニュー</h1>
             {tableNumber && (
-              <p className="text-sm text-orange-500 font-medium">テーブル {tableNumber}</p>
+              <p className="text-base text-orange-500 font-semibold">テーブル {tableNumber}</p>
             )}
           </div>
-          {/* 呼び出しボタン */}
+          {/* 呼び出しボタン: 誰でも押せる大きさ */}
           <button
             onClick={handleCallStaff}
             disabled={callCooldown || isCalling}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-semibold transition-all shadow-sm ${
+            className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-base font-bold transition-all shadow min-h-[52px] flex-shrink-0 ${
               callCooldown
                 ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                : "bg-orange-100 text-orange-600 hover:bg-orange-200 active:scale-95"
+                : "bg-orange-500 text-white active:scale-95"
             }`}
           >
-            <span className="text-lg">🔔</span>
+            <span className="text-xl">🔔</span>
             {callCooldown ? "呼び出し済み" : "スタッフを呼ぶ"}
           </button>
         </div>
 
+        {/* カテゴリタブ: 押しやすい高さ */}
         <div className="flex gap-2 px-4 pb-3 overflow-x-auto">
           {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                activeCategory === cat ? "bg-orange-500 text-white" : "bg-gray-100 text-gray-600"
+              className={`flex-shrink-0 px-5 py-3 rounded-full text-base font-semibold transition-colors min-h-[48px] ${
+                activeCategory === cat ? "bg-orange-500 text-white" : "bg-gray-100 text-gray-700"
               }`}
             >
               {cat}
