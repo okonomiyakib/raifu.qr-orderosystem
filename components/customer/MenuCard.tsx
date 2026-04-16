@@ -12,7 +12,7 @@ interface MenuCardProps {
 }
 
 export function MenuCard({ item, taxSettings }: MenuCardProps) {
-  const { addItem, items } = useCartStore();
+  const { addItem, items, updateQuantity } = useCartStore();
   const cartItem = items.find((i) => i.itemId === item.id);
   const { amount, label } = displayPrice(item.price, item.taxType ?? "standard", taxSettings);
 
@@ -65,14 +65,34 @@ export function MenuCard({ item, taxSettings }: MenuCardProps) {
             </span>
             <span className="text-xs text-gray-400 ml-1">（{label}）</span>
           </div>
-          <button
-            onClick={handleAdd}
-            disabled={!item.isAvailable}
-            className="flex items-center gap-1 bg-orange-500 disabled:bg-gray-300 text-white px-5 py-3 rounded-xl text-base font-semibold active:scale-95 transition-transform"
-          >
-            <span className="text-xl">+</span>
-            注文
-          </button>
+          {cartItem ? (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => updateQuantity(cartItem.itemId, cartItem.quantity - 1)}
+                className="w-10 h-10 rounded-full bg-gray-200 text-gray-700 flex items-center justify-center text-xl font-bold active:scale-95 transition-transform"
+              >
+                −
+              </button>
+              <span className="text-lg font-bold text-gray-800 w-6 text-center">
+                {cartItem.quantity}
+              </span>
+              <button
+                onClick={() => updateQuantity(cartItem.itemId, cartItem.quantity + 1)}
+                className="w-10 h-10 rounded-full bg-orange-500 text-white flex items-center justify-center text-xl font-bold active:scale-95 transition-transform"
+              >
+                ＋
+              </button>
+            </div>
+          ) : (
+            <button
+              onClick={handleAdd}
+              disabled={!item.isAvailable}
+              className="flex items-center gap-1 bg-orange-500 disabled:bg-gray-300 text-white px-5 py-3 rounded-xl text-base font-semibold active:scale-95 transition-transform"
+            >
+              <span className="text-xl">+</span>
+              注文
+            </button>
+          )}
         </div>
       </div>
     </div>

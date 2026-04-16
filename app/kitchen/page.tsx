@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 import { Order, OrderStatus } from "@/lib/types";
 import { OrderCard } from "@/components/kitchen/OrderCard";
@@ -37,6 +37,7 @@ export default function KitchenPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<TabType>("active");
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const dismissedCallIds = useRef<Set<string>>(new Set());
 
   const fetchOrders = useCallback(async () => {
     const { data: activeData } = await supabase
@@ -64,13 +65,16 @@ export default function KitchenPage() {
       .eq("status", "waiting")
       .order("created_at", { ascending: true });
 
-    const newCalls: Call[] = (data ?? []).map((row) => ({
-      id: row.id,
-      tableId: row.table_id,
-      tableNumber: row.table_number,
-      status: row.status,
-      createdAt: row.created_at,
-    }));
+    // 対応済みとしてローカルで管理しているIDは除外（DB反映前の競合を防ぐ）
+    const newCalls: Call[] = (data ?? [])
+      .filter((row) => !dismissedCallIds.current.has(row.id))
+      .map((row) => ({
+        id: row.id,
+        tableId: row.table_id,
+        tableNumber: row.table_number,
+        status: row.status,
+        createdAt: row.created_at,
+      }));
 
     setCalls((prev) => {
       const prevIds = new Set(prev.map((c) => c.id));
@@ -102,11 +106,15 @@ export default function KitchenPage() {
 
   // 呼び出し対応：即時削除してからAPI
   const handleRespondCall = async (callId: string, tableNumber: number) => {
+    // dismissedCallIds に登録することで、fetchCalls が再実行されても復活しない
+    dismissedCallIds.current.add(callId);
     setCalls((prev) => prev.filter((c) => c.id !== callId));
     try {
       await fetch(`/api/calls/${callId}`, { method: "PATCH" });
       toast.success(`テーブル ${tableNumber} の呼び出しに対応しました`);
     } catch {
+      // 失敗時は登録を取り消して元に戻す
+      dismissedCallIds.current.delete(callId);
       await fetchCalls();
       toast.error("更新に失敗しました");
     }
