@@ -23,6 +23,7 @@ export default function MenuPage() {
   const [loading, setLoading] = useState(true);
   const [showConfirm, setShowConfirm] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [orderSuccess, setOrderSuccess] = useState(false);
   const [isCalling, setIsCalling] = useState(false);
   const [callCooldown, setCallCooldown] = useState(false);
   const { setTable, items, clearCart } = useCartStore();
@@ -78,8 +79,12 @@ export default function MenuPage() {
         body: JSON.stringify({ tableId, tableNumber, items, notes }),
       });
       if (!res.ok) throw new Error();
-      clearCart();
-      router.push("/order-complete");
+      // 完了アニメーションを表示してから遷移
+      setOrderSuccess(true);
+      setTimeout(() => {
+        clearCart();
+        router.push("/order-complete");
+      }, 1800);
     } catch {
       toast.error("注文に失敗しました。もう一度お試しください");
     } finally {
@@ -186,6 +191,7 @@ export default function MenuPage() {
           onConfirm={handleConfirmOrder}
           onCancel={() => setShowConfirm(false)}
           isSubmitting={isSubmitting}
+          isSuccess={orderSuccess}
         />
       )}
     </div>
