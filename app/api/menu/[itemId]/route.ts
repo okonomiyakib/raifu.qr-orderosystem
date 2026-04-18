@@ -1,11 +1,17 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { createSupabaseServer } from "@/lib/supabase-server";
+import { getAuthenticatedStoreId } from "@/lib/get-store";
 
-// PATCH /api/menu/[itemId] - メニュー更新
+// PATCH /api/menu/[itemId] - メニュー更新（管理者用）
 export async function PATCH(
   req: Request,
   { params }: { params: Promise<{ itemId: string }> }
 ) {
+  const storeId = await getAuthenticatedStoreId();
+  if (!storeId) {
+    return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+  }
+
   try {
     const { itemId } = await params;
     const body = await req.json();
@@ -21,10 +27,13 @@ export async function PATCH(
     if (body.isAvailable !== undefined) updateData.is_available = body.isAvailable;
     if (body.sortOrder !== undefined) updateData.sort_order = body.sortOrder;
 
+    const supabase = await createSupabaseServer();
+    // store_id を条件に追加することで他店舗のメニューを変更不可にする
     const { error } = await supabase
       .from("menu_items")
       .update(updateData)
-      .eq("id", itemId);
+      .eq("id", itemId)
+      .eq("store_id", storeId);
 
     if (error) throw error;
     return NextResponse.json({ id: itemId, ...body });
@@ -34,17 +43,26 @@ export async function PATCH(
   }
 }
 
-// DELETE /api/menu/[itemId] - メニュー削除
+// DELETE /api/menu/[itemId] - メニュー削除（管理者用）
 export async function DELETE(
   _req: Request,
   { params }: { params: Promise<{ itemId: string }> }
 ) {
+  const storeId = await getAuthenticatedStoreId();
+  if (!storeId) {
+    return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
+  }
+
   try {
     const { itemId } = await params;
+
+    const supabase = await createSupabaseServer();
+    // store_id を条件に追加することで他店舗のメニューを削除不可にする
     const { error } = await supabase
       .from("menu_items")
       .delete()
-      .eq("id", itemId);
+      .eq("id", itemId)
+      .eq("store_id", storeId);
 
     if (error) throw error;
     return NextResponse.json({ success: true });

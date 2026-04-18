@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { createSupabaseServer } from "@/lib/supabase-server";
 import { getAuthenticatedStoreId, getStoreIdByTable } from "@/lib/get-store";
 
 // GET /api/calls - 未対応の呼び出し一覧（厨房用）
@@ -9,6 +9,7 @@ export async function GET() {
     return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
   }
 
+  const supabase = await createSupabaseServer();
   const { data, error } = await supabase
     .from("calls")
     .select("*")
@@ -42,6 +43,7 @@ export async function POST(req: Request) {
     // テーブルからstoreIdを取得
     const storeId = await getStoreIdByTable(tableId);
 
+    const supabase = await createSupabaseServer();
     const { data, error } = await supabase
       .from("calls")
       .insert({ table_id: tableId, table_number: tableNumber, status: "waiting", store_id: storeId })

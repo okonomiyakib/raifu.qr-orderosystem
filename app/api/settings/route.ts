@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { createSupabaseServer } from "@/lib/supabase-server";
 import { getAuthenticatedStoreId } from "@/lib/get-store";
 import { AppSettings } from "@/lib/types";
 import { DEFAULT_TAX_SETTINGS } from "@/lib/tax";
@@ -19,6 +19,7 @@ export async function GET(req: Request) {
   const authStoreId = await getAuthenticatedStoreId();
   const storeId = authStoreId ?? queryStoreId;
 
+  const supabase = await createSupabaseServer();
   try {
     let query = supabase.from("app_settings").select("*").limit(1);
     if (storeId) query = query.eq("store_id", storeId);
@@ -42,6 +43,7 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
   }
 
+  const supabase = await createSupabaseServer();
   try {
     const body = await req.json() as Partial<AppSettings>;
 

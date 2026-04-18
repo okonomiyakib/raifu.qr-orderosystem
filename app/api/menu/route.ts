@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { createSupabaseServer } from "@/lib/supabase-server";
 import { getAuthenticatedStoreId } from "@/lib/get-store";
 import { MenuItem } from "@/lib/types";
 
@@ -28,6 +28,7 @@ export async function GET(req: Request) {
   const authStoreId = await getAuthenticatedStoreId();
   const storeId = authStoreId ?? queryStoreId;
 
+  const supabase = await createSupabaseServer();
   let query = supabase.from("menu_items").select("*").order("sort_order", { ascending: true });
   if (storeId) query = query.eq("store_id", storeId);
 
@@ -48,6 +49,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
   }
 
+  const supabase = await createSupabaseServer();
   try {
     const body = await req.json();
     const { data, error } = await supabase

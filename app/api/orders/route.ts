@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { createSupabaseServer } from "@/lib/supabase-server";
 import { getAuthenticatedStoreId, getStoreIdByTable } from "@/lib/get-store";
 
 function toOrder(row: Record<string, unknown>) {
@@ -28,6 +28,7 @@ export async function GET(req: Request) {
   const status = searchParams.get("status");
   const tableId = searchParams.get("tableId");
 
+  const supabase = await createSupabaseServer();
   let query = supabase
     .from("orders")
     .select("*")
@@ -69,6 +70,7 @@ export async function POST(req: Request) {
       0
     );
 
+    const supabase = await createSupabaseServer();
     const { data, error } = await supabase
       .from("orders")
       .insert({

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { createSupabaseServer } from "@/lib/supabase-server";
 import { getAuthenticatedStoreId } from "@/lib/get-store";
 
 // POST /api/seed - デモデータを投入（開発用・管理者のみ）
@@ -8,6 +8,8 @@ export async function POST() {
   if (!storeId) {
     return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
   }
+
+  const supabase = await createSupabaseServer();
 
   try {
     // 既存データ削除（この店舗のデータのみ）

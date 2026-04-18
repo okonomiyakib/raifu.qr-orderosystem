@@ -7,14 +7,17 @@ export async function getAuthenticatedStoreId(): Promise<string | null> {
   const supabase = await createSupabaseServer();
   const {
     data: { user },
+    error: userError,
   } = await supabase.auth.getUser();
+  console.log("[getAuthenticatedStoreId] user:", user?.id ?? null, "error:", userError?.message ?? null);
   if (!user) return null;
 
-  const { data: store } = await supabase
+  const { data: store, error: storeError } = await supabase
     .from("stores")
     .select("id")
     .eq("owner_id", user.id)
     .single();
+  console.log("[getAuthenticatedStoreId] store:", store?.id ?? null, "error:", storeError?.message ?? null);
 
   return store?.id ?? null;
 }

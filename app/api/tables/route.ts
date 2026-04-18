@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { createSupabaseServer } from "@/lib/supabase-server";
 import { getAuthenticatedStoreId } from "@/lib/get-store";
 import { Table } from "@/lib/types";
 
@@ -20,6 +20,7 @@ export async function GET() {
     return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
   }
 
+  const supabase = await createSupabaseServer();
   const { data, error } = await supabase
     .from("tables")
     .select("*")
@@ -41,6 +42,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "認証が必要です" }, { status: 401 });
   }
 
+  const supabase = await createSupabaseServer();
   try {
     const body = await req.json();
     const { data, error } = await supabase
@@ -58,7 +60,7 @@ export async function POST(req: Request) {
     if (error) throw error;
     return NextResponse.json(toTable(data));
   } catch (error) {
-    console.error("テーブル追加エラー:", error);
+    console.error("テーブル追加エラー (詳細):", JSON.stringify(error));
     return NextResponse.json({ error: "テーブルの追加に失敗しました" }, { status: 500 });
   }
 }
