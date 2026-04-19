@@ -14,6 +14,12 @@ body {
 /* モバイル向けタッチ最適化 */
 button, a {
   -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation; /* ダブルタップズームを無効化し、タップ遅延を除去 */
+}
+
+/* iOS safe area 対応（ホームバーとの重なり防止） */
+.cart-safe-bottom {
+  padding-bottom: max(16px, env(safe-area-inset-bottom));
 }
 
 /* スクロールバースタイル */

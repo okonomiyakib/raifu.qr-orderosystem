@@ -124,7 +124,7 @@ export default function MenuPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-36">
+    <div className="min-h-screen bg-gray-50 pb-96">
       <header className="sticky top-0 z-40 bg-white shadow-sm">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <div>
@@ -137,7 +137,7 @@ export default function MenuPage() {
           <button
             onClick={handleCallStaff}
             disabled={callCooldown || isCalling}
-            className={`flex items-center gap-2 px-5 py-3 rounded-2xl text-base font-bold transition-all shadow min-h-[52px] flex-shrink-0 ${
+            className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-5 py-3 rounded-2xl text-sm sm:text-base font-bold transition-all shadow min-h-[52px] flex-shrink-0 ${
               callCooldown
                 ? "bg-gray-100 text-gray-400 cursor-not-allowed"
                 : "bg-orange-500 text-white active:scale-95"
@@ -149,7 +149,7 @@ export default function MenuPage() {
         </div>
 
         {/* カテゴリタブ: 押しやすい高さ */}
-        <div className="flex gap-2 px-4 pb-3 overflow-x-auto">
+        <div className="flex gap-2 px-4 pb-3 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {categories.map((cat) => (
             <button
               key={cat}

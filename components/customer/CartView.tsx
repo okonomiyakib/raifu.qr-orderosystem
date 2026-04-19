@@ -25,7 +25,7 @@ export function CartView({
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50">
-      <div className="max-w-lg mx-auto px-3 pb-4">
+      <div className="max-w-lg mx-auto px-3 cart-safe-bottom">
         <div className="bg-gray-800 rounded-2xl shadow-2xl overflow-hidden ring-1 ring-white/10">
 
           {/* カートヘッダー */}
@@ -38,7 +38,7 @@ export function CartView({
           </div>
 
           {/* カートアイテム一覧 */}
-          <div className="max-h-52 overflow-y-auto px-4 divide-y divide-gray-700">
+          <div className="max-h-[35vh] sm:max-h-52 overflow-y-auto px-4 divide-y divide-gray-700">
             {items.map((item) => (
               <div key={item.itemId} className="flex items-center gap-3 py-3.5">
                 <div className="flex-1 min-w-0">

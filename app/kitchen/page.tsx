@@ -192,37 +192,17 @@ export default function KitchenPage() {
     <div className="min-h-screen bg-gray-900 text-white">
       {/* ===== ヘッダー ===== */}
       <header className="bg-gray-900 border-b border-gray-700 px-4 py-3">
-        <div className="max-w-6xl mx-auto flex items-center justify-between gap-4">
+        <div className="max-w-6xl mx-auto flex flex-wrap items-center justify-between gap-2 sm:gap-4">
 
           {/* タイトル + 最終更新 */}
           <div>
-            <h1 className="text-2xl font-black text-white leading-none">厨房ダッシュボード</h1>
+            <h1 className="text-xl sm:text-2xl font-black text-white leading-none">厨房ダッシュボード</h1>
             <p className="text-sm text-gray-400 mt-0.5">
               更新: {lastUpdated.toLocaleTimeString("ja-JP")}
             </p>
           </div>
 
-          {/* カウンター（大きく・一目瞭然） */}
-          <div className="flex gap-3 flex-1 justify-center">
-            <div className={`flex items-center gap-3 rounded-xl px-5 py-3 border-2 ${
-              pendingCount > 0
-                ? "bg-red-600 border-red-400 animate-pulse"
-                : "bg-red-900/30 border-red-900"
-            }`}>
-              <span className="text-4xl font-black text-white tabular-nums">{pendingCount}</span>
-              <span className="text-base font-bold text-red-200">未対応</span>
-            </div>
-            <div className={`flex items-center gap-3 rounded-xl px-5 py-3 border-2 ${
-              preparingCount > 0
-                ? "bg-yellow-500 border-yellow-300"
-                : "bg-yellow-900/30 border-yellow-900"
-            }`}>
-              <span className="text-4xl font-black text-white tabular-nums">{preparingCount}</span>
-              <span className="text-base font-bold text-yellow-100">調理中</span>
-            </div>
-          </div>
-
-          {/* ログアウト */}
+          {/* ログアウト（モバイルでは右上） */}
           <button
             onClick={async () => {
               const supabase = createSupabaseBrowser();
@@ -230,10 +210,30 @@ export default function KitchenPage() {
               router.push("/login");
               router.refresh();
             }}
-            className="text-sm text-gray-400 hover:text-white border border-gray-600 px-4 py-2 rounded-lg flex-shrink-0"
+            className="text-sm text-gray-400 hover:text-white border border-gray-600 px-4 py-2 rounded-lg flex-shrink-0 sm:order-last"
           >
             ログアウト
           </button>
+
+          {/* カウンター（モバイルで全幅2列） */}
+          <div className="flex gap-2 sm:gap-3 w-full sm:w-auto sm:flex-1 sm:justify-center">
+            <div className={`flex-1 sm:flex-none flex items-center gap-2 sm:gap-3 rounded-xl px-3 sm:px-5 py-2 sm:py-3 border-2 ${
+              pendingCount > 0
+                ? "bg-red-600 border-red-400 animate-pulse"
+                : "bg-red-900/30 border-red-900"
+            }`}>
+              <span className="text-3xl sm:text-4xl font-black text-white tabular-nums">{pendingCount}</span>
+              <span className="text-sm sm:text-base font-bold text-red-200">未対応</span>
+            </div>
+            <div className={`flex-1 sm:flex-none flex items-center gap-2 sm:gap-3 rounded-xl px-3 sm:px-5 py-2 sm:py-3 border-2 ${
+              preparingCount > 0
+                ? "bg-yellow-500 border-yellow-300"
+                : "bg-yellow-900/30 border-yellow-900"
+            }`}>
+              <span className="text-3xl sm:text-4xl font-black text-white tabular-nums">{preparingCount}</span>
+              <span className="text-sm sm:text-base font-bold text-yellow-100">調理中</span>
+            </div>
+          </div>
         </div>
       </header>
 
