@@ -1,5 +1,6 @@
 "use client";
 
+import { ReactNode } from "react";
 import Image from "next/image";
 import { MenuItem } from "@/lib/types";
 
@@ -10,6 +11,7 @@ interface MenuCardViewProps {
   label: string;
   onAdd: () => void;
   onUpdateQuantity: (newQty: number) => void;
+  optionSelector?: ReactNode; // トッピング選択UIスロット（任意）
 }
 
 /**
@@ -23,6 +25,7 @@ export function MenuCardView({
   label,
   onAdd,
   onUpdateQuantity,
+  optionSelector,
 }: MenuCardViewProps) {
   return (
     <div className="group bg-white rounded-2xl shadow-sm hover:shadow-md border border-gray-100 overflow-hidden transition-all duration-200 hover:-translate-y-0.5">
@@ -73,7 +76,10 @@ export function MenuCardView({
           {item.description}
         </p>
 
-        <div className="flex items-center justify-between gap-2">
+        {/* トッピング選択UIスロット */}
+        {optionSelector}
+
+        <div className="flex items-center justify-between gap-2 mt-4">
           {/* 価格 */}
           <div>
             <span className="text-2xl font-bold text-orange-600">

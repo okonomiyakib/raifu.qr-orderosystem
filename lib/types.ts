@@ -10,6 +10,12 @@ export interface Table {
   capacity: number;
 }
 
+export interface Option {
+  id: string;
+  name: string;
+  price: number;
+}
+
 export interface MenuItem {
   id: string;
   name: string;
@@ -20,6 +26,7 @@ export interface MenuItem {
   imageUrl: string;
   isAvailable: boolean;
   sortOrder: number;
+  options?: Option[];  // トッピング・オプション（任意）
 }
 
 export interface TaxSettings {
@@ -39,6 +46,7 @@ export interface CartItem {
   price: number;
   taxType: TaxType;
   quantity: number;
+  selectedOptions?: Option[];  // 選択済みオプション（任意）
 }
 
 export interface Order {

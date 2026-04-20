@@ -45,6 +45,12 @@ export function CartView({
                   <p className="text-white text-base font-semibold truncate">
                     {item.name}
                   </p>
+                  {/* 選択済みオプション表示（optionalフィールド、既存CartItemには影響なし） */}
+                  {item.selectedOptions && item.selectedOptions.length > 0 && (
+                    <p className="text-gray-400 text-xs mt-0.5 truncate">
+                      {item.selectedOptions.map((o) => o.name).join("、")}
+                    </p>
+                  )}
                   <p className="text-orange-400 text-sm mt-0.5">
                     ¥{item.price.toLocaleString()}
                   </p>
