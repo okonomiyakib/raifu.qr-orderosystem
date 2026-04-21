@@ -26,6 +26,7 @@ export async function PATCH(
     if (body.imageUrl !== undefined) updateData.image_url = body.imageUrl;
     if (body.isAvailable !== undefined) updateData.is_available = body.isAvailable;
     if (body.sortOrder !== undefined) updateData.sort_order = body.sortOrder;
+    if (body.options !== undefined) updateData.options = body.options;
 
     const supabase = await createSupabaseServer();
     // store_id を条件に追加することで他店舗のメニューを変更不可にする

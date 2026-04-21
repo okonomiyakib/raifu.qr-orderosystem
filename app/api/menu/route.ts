@@ -14,6 +14,7 @@ function toMenuItem(row: Record<string, unknown>): MenuItem {
     imageUrl: row.image_url as string,
     isAvailable: row.is_available as boolean,
     sortOrder: row.sort_order as number,
+    options: (row.options as MenuItem["options"]) ?? [],
   };
 }
 
@@ -64,6 +65,7 @@ export async function POST(req: Request) {
         is_available: true,
         sort_order: body.sortOrder ?? 99,
         store_id: storeId,
+        options: body.options ?? [],
       })
       .select()
       .single();
