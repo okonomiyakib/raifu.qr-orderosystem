@@ -16,6 +16,7 @@ export default function MenuPage() {
   const { tableId } = useParams<{ tableId: string }>();
   const router = useRouter();
   const [tableNumber, setTableNumberState] = useState<number | null>(null);
+  const [storeId, setStoreId] = useState<string | null>(null);
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
   const [activeCategory, setActiveCategory] = useState<string>("すべて");
@@ -39,6 +40,7 @@ export default function MenuPage() {
       const tableData = await tableRes.json();
       setTable(tableId, tableData.tableNumber);
       setTableNumberState(tableData.tableNumber);
+      setStoreId(tableData.storeId ?? null);
 
       // storeId をクエリパラメータで渡して店舗データのみ取得
       const storeParam = tableData.storeId ? `?storeId=${tableData.storeId}` : "";
@@ -76,7 +78,7 @@ export default function MenuPage() {
       const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tableId, tableNumber, items, notes }),
+        body: JSON.stringify({ tableId, tableNumber, storeId, items, notes }),
       });
       if (!res.ok) throw new Error();
       // 完了アニメーションを表示してから遷移

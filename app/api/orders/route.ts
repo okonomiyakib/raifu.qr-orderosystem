@@ -52,7 +52,9 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { tableId, tableNumber, items, notes } = body;
+    const { tableId, tableNumber, storeId: bodyStoreId, items, notes } = body;
+
+    console.log("[ORDER] step1 body received:", { tableId, tableNumber, bodyStoreId, itemsCount: items?.length });
 
     if (!tableId || !items || items.length === 0) {
       return NextResponse.json(
@@ -61,8 +63,17 @@ export async function POST(req: Request) {
       );
     }
 
-    // テーブルからstoreIdを取得
-    const storeId = await getStoreIdByTable(tableId);
+    // クライアントから渡されたstoreIdを優先し、なければDBから取得
+    const storeId = bodyStoreId ?? await getStoreIdByTable(tableId);
+    console.log("[ORDER] step2 storeId:", storeId);
+
+    if (!storeId) {
+      console.error("[ORDER] storeId が null → tables.store_id が未設定の可能性");
+      return NextResponse.json(
+        { error: "テーブル情報の取得に失敗しました" },
+        { status: 400 }
+      );
+    }
 
     const totalAmount = items.reduce(
       (sum: number, item: { price: number; quantity: number }) =>
@@ -71,7 +82,7 @@ export async function POST(req: Request) {
     );
 
     const supabase = await createSupabaseServer();
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("orders")
       .insert({
         table_id: tableId,
@@ -82,14 +93,14 @@ export async function POST(req: Request) {
         notes: notes || "",
         items_done: {},
         store_id: storeId,
-      })
-      .select()
-      .single();
+      });
+
+    console.log("[ORDER] step3 insert result:", error ? `ERROR: ${error.message} (${error.code})` : "success");
 
     if (error) throw error;
-    return NextResponse.json(toOrder(data));
+    return NextResponse.json({ success: true }, { status: 201 });
   } catch (error) {
-    console.error("注文作成エラー:", error);
+    console.error("[ORDER] caught error:", error);
     return NextResponse.json({ error: "注文の作成に失敗しました" }, { status: 500 });
   }
 }
