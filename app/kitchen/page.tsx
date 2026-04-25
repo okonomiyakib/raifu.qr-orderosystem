@@ -2,8 +2,9 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { supabase } from "@/lib/supabase";
 import { createSupabaseBrowser } from "@/lib/supabase-browser";
+
+const supabase = createSupabaseBrowser();
 import { Order, OrderStatus } from "@/lib/types";
 import { OrderCard } from "@/components/kitchen/OrderCard";
 import toast from "react-hot-toast";
