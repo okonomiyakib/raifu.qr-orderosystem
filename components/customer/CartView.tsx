@@ -14,7 +14,7 @@ interface CartViewProps {
 /**
  * Presentational component — UIのみ
  * ロジック/状態管理は Cart.tsx (Container) が担当
- * isExpanded: 展開/折りたたみはUIのみのローカルstate
+ * isOpen: ボトムシートの開閉はUIのみのローカルstate
  */
 export function CartView({
   items,
@@ -23,18 +23,44 @@ export function CartView({
   onUpdateQuantity,
   onCheckout,
 }: CartViewProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
 
   if (items.length === 0) return null;
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 z-50">
-      <div className="max-w-lg mx-auto px-3 cart-safe-bottom">
-        <div className="bg-gray-800 rounded-2xl shadow-2xl overflow-hidden ring-1 ring-white/10">
+    <>
+      {/* ── バックドロップ ── */}
+      <div
+        onClick={() => setIsOpen(false)}
+        className={`fixed inset-0 z-40 bg-black transition-opacity duration-300 ${
+          isOpen ? "opacity-50 pointer-events-auto" : "opacity-0 pointer-events-none"
+        }`}
+      />
 
-          {/* アイテム一覧：展開時のみ表示 */}
-          {isExpanded && (
-            <div className="max-h-[40vh] overflow-y-auto px-4 divide-y divide-gray-700">
+      {/* ── ボトムシート ── */}
+      <div
+        className={`fixed left-0 right-0 bottom-[72px] z-50 transition-transform duration-300 ease-out ${
+          isOpen ? "translate-y-0" : "translate-y-full"
+        }`}
+      >
+        <div className="max-w-lg mx-auto px-3">
+          <div className="bg-gray-800 rounded-2xl shadow-2xl overflow-hidden ring-1 ring-white/10">
+
+            {/* シートヘッダー */}
+            <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-gray-700">
+              <p className="text-white font-bold text-base">カートの内容</p>
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="w-8 h-8 flex items-center justify-center rounded-full bg-gray-700 text-gray-300 text-lg leading-none"
+                aria-label="閉じる"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* アイテム一覧 */}
+            <div className="max-h-[50vh] overflow-y-auto px-4 divide-y divide-gray-700">
               {items.map((item) => (
                 <div key={item.itemId} className="flex items-center gap-3 py-3.5">
                   <div className="flex-1 min-w-0">
@@ -72,14 +98,19 @@ export function CartView({
                 </div>
               ))}
             </div>
-          )}
 
-          {/* 常時表示バー */}
+          </div>
+        </div>
+      </div>
+
+      {/* ── 常時表示バー（固定）── */}
+      <div className="fixed bottom-0 left-0 right-0 z-50">
+        <div className="max-w-lg mx-auto px-3 cart-safe-bottom">
           <button
             type="button"
-            onClick={() => setIsExpanded((v) => !v)}
-            className="w-full flex items-center gap-3 px-4 py-4 border-t border-gray-700 text-left"
-            aria-label={isExpanded ? "カートを閉じる" : "カートを開く"}
+            onClick={() => setIsOpen((v) => !v)}
+            className="w-full bg-gray-800 rounded-2xl shadow-2xl ring-1 ring-white/10 flex items-center gap-3 px-4 py-4 text-left"
+            aria-label={isOpen ? "カートを閉じる" : "カートを開く"}
           >
             {/* 商品数バッジ */}
             <div className="relative flex-shrink-0">
@@ -95,7 +126,7 @@ export function CartView({
                 ¥{totalAmount().toLocaleString()}
               </p>
               <p className="text-gray-400 text-xs leading-none mt-0.5">
-                税込合計 · {isExpanded ? "▼ 閉じる" : "▲ 内容を見る"}
+                税込合計 · {isOpen ? "▼ 閉じる" : "▲ 内容を見る"}
               </p>
             </div>
 
@@ -108,9 +139,8 @@ export function CartView({
               注文する
             </button>
           </button>
-
         </div>
       </div>
-    </div>
+    </>
   );
 }
