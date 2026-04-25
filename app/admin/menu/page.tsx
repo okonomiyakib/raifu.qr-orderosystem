@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { MenuItem, AppSettings } from "@/lib/types";
 import { MenuItemModal, MenuFormData } from "@/components/admin/MenuItemModal";
+import { OptionsModal } from "@/components/admin/OptionsModal";
 import { DEFAULT_TAX_SETTINGS } from "@/lib/tax";
 import toast from "react-hot-toast";
 import {
@@ -34,12 +35,14 @@ function SortableMenuItem({
   onToggle,
   onDelete,
   onPriceChange,
+  onOptions,
 }: {
   item: MenuItem;
   onEdit: () => void;
   onToggle: () => void;
   onDelete: () => void;
   onPriceChange: (newPrice: number) => void;
+  onOptions: () => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
     useSortable({ id: item.id! });
@@ -165,6 +168,12 @@ function SortableMenuItem({
           ✏️ 編集
         </button>
         <button
+          onClick={onOptions}
+          className="flex-1 py-3.5 text-sm font-bold text-purple-600 bg-purple-50 border-r border-gray-100"
+        >
+          ＋ 選択肢
+        </button>
+        <button
           onClick={onDelete}
           className="px-5 py-3.5 text-sm font-bold text-red-400 bg-white"
         >
@@ -187,6 +196,7 @@ export default function MenuAdminPage() {
   const [showModal, setShowModal] = useState(false);
   const [editTarget, setEditTarget] = useState<MenuItem | undefined>();
   const [isSaving, setIsSaving] = useState(false);
+  const [optionsTarget, setOptionsTarget] = useState<MenuItem | undefined>();
   const [filterCategory, setFilterCategory] = useState("すべて");
 
   const loadAll = async () => {
@@ -453,6 +463,12 @@ export default function MenuAdminPage() {
                     ✏️ 編集
                   </button>
                   <button
+                    onClick={() => setOptionsTarget(item)}
+                    className="flex-1 py-3.5 text-sm font-bold text-purple-600 bg-purple-50 border-r border-gray-100"
+                  >
+                    ＋ 選択肢
+                  </button>
+                  <button
                     onClick={() => handleDelete(item)}
                     className="px-5 py-3.5 text-sm font-bold text-red-400 bg-white"
                   >
@@ -474,6 +490,7 @@ export default function MenuAdminPage() {
                     onToggle={() => handleToggleAvailable(item)}
                     onDelete={() => handleDelete(item)}
                     onPriceChange={(newPrice) => handleQuickPriceChange(item, newPrice)}
+                    onOptions={() => setOptionsTarget(item)}
                   />
                 ))}
               </div>
@@ -501,6 +518,14 @@ export default function MenuAdminPage() {
           onSave={handleSave}
           onClose={() => { setShowModal(false); setEditTarget(undefined); }}
           isSaving={isSaving}
+        />
+      )}
+
+      {optionsTarget && (
+        <OptionsModal
+          item={optionsTarget}
+          onClose={() => setOptionsTarget(undefined)}
+          onSaved={async () => { await loadAll(); setOptionsTarget(undefined); }}
         />
       )}
     </div>
