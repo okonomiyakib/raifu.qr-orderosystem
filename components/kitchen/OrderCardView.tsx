@@ -134,15 +134,30 @@ export function OrderCardView({
                   >
                     {itemDone ? "✓" : "○"}
                   </span>
-                  <span
-                    className={`text-xl font-bold truncate ${
-                      itemDone
-                        ? "line-through text-gray-400"
-                        : "text-gray-900"
-                    }`}
-                  >
-                    {item.name}
-                  </span>
+                  <div className="min-w-0 flex-1">
+                    <span
+                      className={`text-xl font-bold ${
+                        itemDone
+                          ? "line-through text-gray-400"
+                          : "text-gray-900"
+                      }`}
+                    >
+                      {item.name}
+                    </span>
+                    {item.selectedOptions && item.selectedOptions.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {item.selectedOptions.map((opt) => (
+                          <span
+                            key={opt.id}
+                            className="text-xs bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-medium"
+                          >
+                            {opt.name}
+                            {opt.price > 0 && ` +¥${opt.price.toLocaleString()}`}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <span
                   className={`text-xl font-black flex-shrink-0 ml-3 ${
