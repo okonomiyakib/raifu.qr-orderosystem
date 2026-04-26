@@ -36,9 +36,8 @@ export default function AdminPage() {
   }, [router]);
 
   const appUrl =
-    typeof window !== "undefined"
-      ? window.location.origin
-      : process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+    process.env.NEXT_PUBLIC_APP_URL ??
+    (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
 
   const loadTables = async () => {
     try {
