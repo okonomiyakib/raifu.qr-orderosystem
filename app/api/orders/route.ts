@@ -81,6 +81,11 @@ export async function POST(req: Request) {
       0
     );
 
+    if (totalAmount < 0) {
+      console.error("[ORDER] totalAmount が不正:", totalAmount);
+      return NextResponse.json({ error: "注文金額が不正です" }, { status: 400 });
+    }
+
     const supabase = await createSupabaseServer();
     const { error } = await supabase
       .from("orders")
