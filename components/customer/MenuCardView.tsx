@@ -12,6 +12,7 @@ interface MenuCardViewProps {
   onAdd: () => void;
   onUpdateQuantity: (newQty: number) => void;
   optionSelector?: ReactNode; // トッピング選択UIスロット（任意）
+  onClick?: () => void;       // カード全体のタップハンドラ（任意）
 }
 
 /**
@@ -26,9 +27,14 @@ export function MenuCardView({
   onAdd,
   onUpdateQuantity,
   optionSelector,
+  onClick,
 }: MenuCardViewProps) {
   return (
-    <div className="group bg-white rounded-2xl shadow-sm hover:shadow-md border border-gray-100 overflow-hidden transition-all duration-200 hover:-translate-y-0.5">
+    <div
+      className="group bg-white rounded-2xl shadow-sm hover:shadow-md border border-gray-100 overflow-hidden transition-all duration-200 hover:-translate-y-0.5"
+      onClick={onClick}
+      style={onClick ? { cursor: "pointer" } : undefined}
+    >
       {/* 商品画像 */}
       <div className="relative h-44 w-full bg-gray-100 overflow-hidden">
         <Image
