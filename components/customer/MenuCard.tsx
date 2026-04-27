@@ -6,7 +6,7 @@ import { useCartStore } from "@/lib/store";
 import { displayPrice } from "@/lib/tax";
 import toast from "react-hot-toast";
 import { MenuCardView } from "./MenuCardView";
-import { OptionSelector } from "./OptionSelector";
+import { OptionModal } from "./OptionModal";
 
 interface MenuCardProps {
   item: MenuItem;
@@ -16,6 +16,7 @@ interface MenuCardProps {
 export function MenuCard({ item, taxSettings }: MenuCardProps) {
   const { addItem, items, updateQuantity } = useCartStore();
   const [selectedOptions, setSelectedOptions] = useState<Option[]>([]);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const hasOptions = (item.options ?? []).length > 0;
 
@@ -76,23 +77,42 @@ export function MenuCard({ item, taxSettings }: MenuCardProps) {
   };
 
   return (
-    <MenuCardView
-      item={item}
-      cartQuantity={cartItem?.quantity}
-      amount={amount}
-      label={label}
-      onAdd={handleAdd}
-      onUpdateQuantity={(newQty) => updateQuantity(item.id, newQty)}
-      optionSelector={
-        hasOptions ? (
-          <OptionSelector
-            options={item.options!}
-            selectedOptions={selectedOptions}
-            onToggle={handleToggleOption}
-            basePrice={item.price}
-          />
-        ) : undefined
-      }
-    />
+    <>
+      <MenuCardView
+        item={item}
+        cartQuantity={cartItem?.quantity}
+        amount={amount}
+        label={label}
+        onAdd={handleAdd}
+        onUpdateQuantity={(newQty) => updateQuantity(item.id, newQty)}
+        optionSelector={
+          hasOptions ? (
+            <div className="mt-3 pt-3 border-t border-gray-100">
+              <button
+                onClick={() => setIsModalOpen(true)}
+                className="w-full py-2 border border-orange-400 text-orange-500 rounded-xl text-sm font-semibold active:scale-95 transition-transform"
+              >
+                トッピングを選択
+                {selectedOptions.length > 0 && `（${selectedOptions.length}件）`}
+              </button>
+              {selectedOptions.length > 0 && (
+                <p className="text-xs text-gray-500 mt-2 truncate">
+                  {selectedOptions.map((o) => o.name).join("、")}
+                </p>
+              )}
+            </div>
+          ) : undefined
+        }
+      />
+      {hasOptions && isModalOpen && (
+        <OptionModal
+          options={item.options!}
+          selectedOptions={selectedOptions}
+          onToggle={handleToggleOption}
+          basePrice={item.price}
+          onClose={() => setIsModalOpen(false)}
+        />
+      )}
+    </>
   );
 }
