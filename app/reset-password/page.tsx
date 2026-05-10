@@ -42,8 +42,10 @@ function ResetPasswordPage() {
       // ネットワークエラー・設定エラーのみここに来る
       if (error.message.includes("rate") || error.status === 429) {
         setError("送信が多すぎます。しばらくしてから再試行してください");
+      } else if (error.message.includes("fetch") || error.message.includes("network") || error.message.toLowerCase().includes("failed")) {
+        setError("サーバーに接続できません。インターネット接続を確認してから再試行してください");
       } else {
-        setError("送信できませんでした。時間をおいて再試行してください");
+        setError(`送信できませんでした。時間をおいて再試行してください（${error.message}）`);
       }
       setLoading(false);
       return;

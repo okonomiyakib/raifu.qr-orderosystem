@@ -29,8 +29,12 @@ export default function ResetPasswordConfirmPage() {
     });
 
     // onAuthStateChange でも検出（PKCE コールバック後に発火するケース）
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
-      if (event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (
+        event === "PASSWORD_RECOVERY" ||
+        event === "SIGNED_IN" ||
+        (event === "INITIAL_SESSION" && session)
+      ) {
         setPageState("form");
       }
     });
