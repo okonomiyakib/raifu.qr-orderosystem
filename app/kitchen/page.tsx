@@ -42,6 +42,7 @@ export default function KitchenPage() {
   const [activeTab, setActiveTab] = useState<TabType>("active");
   const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
   const dismissedCallIds = useRef<Set<string>>(new Set());
+  const toastedCallIds = useRef<Set<string>>(new Set());
 
   const fetchOrders = useCallback(async () => {
     const { data: activeData } = await supabase
@@ -80,18 +81,16 @@ export default function KitchenPage() {
         createdAt: row.created_at,
       }));
 
-    setCalls((prev) => {
-      const prevIds = new Set(prev.map((c) => c.id));
-      newCalls.forEach((c) => {
-        if (!prevIds.has(c.id)) {
-          toast(`🔔 テーブル ${c.tableNumber} から呼び出し`, {
-            duration: 6000,
-            style: { background: "#fee2e2", color: "#991b1b", fontWeight: "bold" },
-          });
-        }
-      });
-      return newCalls;
+    newCalls.forEach((c) => {
+      if (!toastedCallIds.current.has(c.id)) {
+        toastedCallIds.current.add(c.id);
+        toast(`🔔 テーブル ${c.tableNumber} から呼び出し`, {
+          duration: 6000,
+          style: { background: "#fee2e2", color: "#991b1b", fontWeight: "bold" },
+        });
+      }
     });
+    setCalls(newCalls);
   }, []);
 
   useEffect(() => {
