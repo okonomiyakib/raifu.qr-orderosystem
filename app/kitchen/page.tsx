@@ -3,8 +3,6 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createSupabaseBrowser } from "@/lib/supabase-browser";
-
-const supabase = createSupabaseBrowser();
 import { Order, OrderStatus } from "@/lib/types";
 import { OrderCard } from "@/components/kitchen/OrderCard";
 import toast from "react-hot-toast";
@@ -36,6 +34,8 @@ function toOrder(row: Record<string, unknown>): Order & { id: string } {
 
 export default function KitchenPage() {
   const router = useRouter();
+  const supabaseRef = useRef(createSupabaseBrowser());
+  const supabase = supabaseRef.current;
   const [orders, setOrders] = useState<(Order & { id: string })[]>([]);
   const [calls, setCalls] = useState<Call[]>([]);
   const [loading, setLoading] = useState(true);

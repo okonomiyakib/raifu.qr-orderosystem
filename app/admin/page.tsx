@@ -17,6 +17,11 @@ export default function AdminPage() {
   const [adding, setAdding] = useState(false);
   const [storeName, setStoreName] = useState<string | null>(null);
   const [showQR, setShowQR] = useState(false);
+  const [appUrl, setAppUrl] = useState("http://localhost:3000");
+
+  useEffect(() => {
+    fetch("/api/host").then((r) => r.json()).then(({ url }) => setAppUrl(url));
+  }, []);
 
   useEffect(() => {
     const supabase = createSupabaseBrowser();
@@ -34,10 +39,6 @@ export default function AdminPage() {
       }
     });
   }, [router]);
-
-  const appUrl =
-    process.env.NEXT_PUBLIC_APP_URL ??
-    (typeof window !== "undefined" ? window.location.origin : "http://localhost:3000");
 
   const loadTables = async () => {
     try {
