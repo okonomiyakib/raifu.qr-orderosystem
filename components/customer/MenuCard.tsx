@@ -20,6 +20,7 @@ export function MenuCard({ item, taxSettings }: MenuCardProps) {
   );
 
   const navigateToDetail = () => {
+    sessionStorage.setItem("menu-scroll-position", String(window.scrollY));
     router.push(`/menu/${tableId}/${item.id}`);
   };
 

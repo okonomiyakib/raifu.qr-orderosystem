@@ -106,10 +106,13 @@ export function CartView({
       {/* ── 常時表示バー（固定）── */}
       <div className="fixed bottom-0 left-0 right-0 z-50">
         <div className="max-w-lg mx-auto px-3 cart-safe-bottom">
-          <button
-            type="button"
+          {/* button の中に button はHTML仕様違反のため、外側を div に変更 */}
+          <div
+            role="button"
+            tabIndex={0}
             onClick={() => setIsOpen((v) => !v)}
-            className="w-full bg-gray-800 rounded-2xl shadow-2xl ring-1 ring-white/10 flex items-center gap-3 px-4 py-4 text-left"
+            onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setIsOpen((v) => !v); }}
+            className="w-full bg-gray-800 rounded-2xl shadow-2xl ring-1 ring-white/10 flex items-center gap-3 px-4 py-4 cursor-pointer"
             aria-label={isOpen ? "カートを閉じる" : "カートを開く"}
           >
             {/* 商品数バッジ */}
@@ -138,7 +141,7 @@ export function CartView({
             >
               注文する
             </button>
-          </button>
+          </div>
         </div>
       </div>
     </>

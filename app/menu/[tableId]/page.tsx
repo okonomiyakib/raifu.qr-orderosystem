@@ -68,6 +68,16 @@ export default function MenuPage() {
 
   useEffect(() => { loadData(); }, [loadData]);
 
+  // 商品詳細から戻ったときにスクロール位置を復元
+  useEffect(() => {
+    if (loading) return;
+    const saved = sessionStorage.getItem("menu-scroll-position");
+    if (!saved) return;
+    sessionStorage.removeItem("menu-scroll-position");
+    const y = parseInt(saved, 10);
+    requestAnimationFrame(() => { window.scrollTo(0, y); });
+  }, [loading]);
+
   const filteredItems = activeCategory === "すべて"
     ? menuItems
     : menuItems.filter((i) => i.category === activeCategory);

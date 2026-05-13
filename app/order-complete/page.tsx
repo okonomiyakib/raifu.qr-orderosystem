@@ -36,7 +36,7 @@ export default function OrderCompletePage() {
         </p>
         <p className="text-lg text-gray-500 mb-8 leading-relaxed">
           ご注文を受け付けました。<br />
-          まもなくお届けします。
+          提供までしばしお待ちください。
         </p>
 
         {/* 待ち時間の案内 */}

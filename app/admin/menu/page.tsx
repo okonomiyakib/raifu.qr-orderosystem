@@ -149,11 +149,11 @@ function SortableMenuItem({
         </div>
       </div>
 
-      {/* アクションボタン：タッチしやすいサイズ */}
-      <div className="flex border-t border-gray-100">
+      {/* アクションボタン：スマホは2×2グリッド / sm以上はflex */}
+      <div className="grid grid-cols-2 sm:flex border-t border-gray-100">
         <button
           onClick={onToggle}
-          className={`flex-1 py-3.5 text-sm font-bold border-r border-gray-100 transition-colors ${
+          className={`flex-1 py-3.5 text-sm font-bold border-r border-b sm:border-b-0 border-gray-100 transition-colors ${
             item.isAvailable
               ? "text-gray-500 bg-gray-50"
               : "text-green-600 bg-green-50"
@@ -163,7 +163,7 @@ function SortableMenuItem({
         </button>
         <button
           onClick={onEdit}
-          className="flex-1 py-3.5 text-sm font-bold text-blue-600 bg-blue-50 border-r border-gray-100"
+          className="flex-1 py-3.5 text-sm font-bold text-blue-600 bg-blue-50 sm:border-r border-b sm:border-b-0 border-gray-100"
         >
           ✏️ 編集
         </button>
@@ -175,7 +175,7 @@ function SortableMenuItem({
         </button>
         <button
           onClick={onDelete}
-          className="px-5 py-3.5 text-sm font-bold text-red-400 bg-white"
+          className="flex-1 sm:flex-none sm:px-5 py-3.5 text-sm font-bold text-red-400 bg-white"
         >
           🗑️
         </button>
@@ -449,16 +449,16 @@ export default function MenuAdminPage() {
                     <p className="text-orange-600 font-bold mt-0.5">¥{item.price.toLocaleString()} 税込</p>
                   </div>
                 </div>
-                <div className="flex border-t border-gray-100">
+                <div className="grid grid-cols-2 sm:flex border-t border-gray-100">
                   <button
                     onClick={() => handleToggleAvailable(item)}
-                    className={`flex-1 py-3.5 text-sm font-bold border-r border-gray-100 ${item.isAvailable ? "text-gray-500 bg-gray-50" : "text-green-600 bg-green-50"}`}
+                    className={`flex-1 py-3.5 text-sm font-bold border-r border-b sm:border-b-0 border-gray-100 ${item.isAvailable ? "text-gray-500 bg-gray-50" : "text-green-600 bg-green-50"}`}
                   >
                     {item.isAvailable ? "売り切れにする" : "販売中に戻す"}
                   </button>
                   <button
                     onClick={() => { setEditTarget(item); setShowModal(true); }}
-                    className="flex-1 py-3.5 text-sm font-bold text-blue-600 bg-blue-50 border-r border-gray-100"
+                    className="flex-1 py-3.5 text-sm font-bold text-blue-600 bg-blue-50 sm:border-r border-b sm:border-b-0 border-gray-100"
                   >
                     ✏️ 編集
                   </button>
@@ -470,7 +470,7 @@ export default function MenuAdminPage() {
                   </button>
                   <button
                     onClick={() => handleDelete(item)}
-                    className="px-5 py-3.5 text-sm font-bold text-red-400 bg-white"
+                    className="flex-1 sm:flex-none sm:px-5 py-3.5 text-sm font-bold text-red-400 bg-white"
                   >
                     🗑️
                   </button>

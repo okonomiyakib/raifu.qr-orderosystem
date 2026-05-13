@@ -51,10 +51,12 @@ export default function KitchenPage() {
       .in("status", ["pending", "preparing"])
       .order("created_at", { ascending: true });
 
+    const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
     const { data: servedData } = await supabase
       .from("orders")
       .select("*")
       .eq("status", "served")
+      .gte("updated_at", since24h)
       .order("updated_at", { ascending: false })
       .limit(20);
 
@@ -283,16 +285,19 @@ export default function KitchenPage() {
           >
             対応中 {activeOrders.length > 0 && `(${activeOrders.length})`}
           </button>
-          <button
-            onClick={() => setActiveTab("served")}
-            className={`px-6 py-3 rounded-xl font-black text-lg transition-colors min-h-[52px] ${
-              activeTab === "served"
-                ? "bg-green-600 text-white"
-                : "bg-gray-700 text-gray-300"
-            }`}
-          >
-            提供済 ({servedOrders.length})
-          </button>
+          <div className="flex flex-col items-start gap-1">
+            <button
+              onClick={() => setActiveTab("served")}
+              className={`px-6 py-3 rounded-xl font-black text-lg transition-colors min-h-[52px] ${
+                activeTab === "served"
+                  ? "bg-green-600 text-white"
+                  : "bg-gray-700 text-gray-300"
+              }`}
+            >
+              提供済 ({servedOrders.length})
+            </button>
+            <p className="text-xs text-gray-500 pl-1">提供済みは24時間で非表示になります</p>
+          </div>
         </div>
 
         {activeTab === "active" ? (

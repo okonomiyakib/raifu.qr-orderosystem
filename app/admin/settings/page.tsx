@@ -87,7 +87,7 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm px-4 py-4 sticky top-0 z-30">
-        <div className="max-w-2xl mx-auto flex items-center justify-between">
+        <div className="max-w-lg mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link href="/admin" className="text-gray-400 text-2xl leading-none">←</Link>
             <h1 className="text-xl font-bold text-gray-800">設定</h1>
@@ -95,14 +95,14 @@ export default function SettingsPage() {
           <button
             onClick={() => save(settings)}
             disabled={saving}
-            className="px-5 py-2 bg-orange-500 disabled:bg-orange-300 text-white rounded-xl text-sm font-bold"
+            className="px-5 py-2 min-h-[44px] bg-orange-500 disabled:bg-orange-300 text-white rounded-xl text-sm font-bold"
           >
             {saving ? "保存中..." : "保存する"}
           </button>
         </div>
       </header>
 
-      <main className="max-w-2xl mx-auto px-4 py-6 space-y-6 pb-16">
+      <main className="max-w-lg mx-auto px-4 py-6 space-y-6 pb-16">
 
         {/* ===== 税表示設定 ===== */}
         <section className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100">
