@@ -15,7 +15,8 @@ jobs:
             "${{ secrets.SUPABASE_URL }}/auth/v1/health" \
             -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}")
           echo "Status: $STATUS"
-          if [ "$STATUS" != "200" ]; then
-            echo "Warning: Supabase returned $STATUS"
+          if [ "$STATUS" = "000" ] || [ -z "$STATUS" ]; then
+            echo "Error: Supabase unreachable (project may be paused)"
             exit 1
           fi
+          echo "OK: Supabase is alive"
