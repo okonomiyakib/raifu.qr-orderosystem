@@ -17,10 +17,10 @@ export default function AdminPage() {
   const [adding, setAdding] = useState(false);
   const [storeName, setStoreName] = useState<string | null>(null);
   const [showQR, setShowQR] = useState(false);
-  const [appUrl, setAppUrl] = useState("http://localhost:3000");
+  const [appUrl, setAppUrl] = useState("");
 
   useEffect(() => {
-    fetch("/api/host").then((r) => r.json()).then(({ url }) => setAppUrl(url));
+    setAppUrl(window.location.origin);
   }, []);
 
   useEffect(() => {
