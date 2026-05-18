@@ -7,6 +7,7 @@ import { DEFAULT_TAX_SETTINGS } from "@/lib/tax";
 import { useCartStore } from "@/lib/store";
 import { MenuCard } from "@/components/customer/MenuCard";
 import { Cart } from "@/components/customer/Cart";
+import { BottomNav } from "@/components/customer/BottomNav";
 import { OrderConfirmModal } from "@/components/customer/OrderConfirmModal";
 import toast from "react-hot-toast";
 
@@ -27,6 +28,7 @@ export default function MenuPage() {
   const [orderSuccess, setOrderSuccess] = useState(false);
   const [isCalling, setIsCalling] = useState(false);
   const [callCooldown, setCallCooldown] = useState(false);
+  const [cartOpen, setCartOpen] = useState(false);
   const { setTable, items, clearCart } = useCartStore();
 
   const loadData = useCallback(async () => {
@@ -136,7 +138,7 @@ export default function MenuPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-96">
+    <div className="min-h-screen bg-gray-50 pb-24">
       <header className="sticky top-0 z-40 bg-white shadow-sm">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <div>
@@ -195,7 +197,15 @@ export default function MenuPage() {
         )}
       </main>
 
-      <Cart onCheckout={() => setShowConfirm(true)} />
+      <Cart
+        onCheckout={() => { setCartOpen(false); setShowConfirm(true); }}
+        isOpen={cartOpen}
+        onClose={() => setCartOpen(false)}
+      />
+      <BottomNav
+        onCartToggle={() => setCartOpen((v) => !v)}
+        isCartOpen={cartOpen}
+      />
 
       {showConfirm && (
         <OrderConfirmModal
