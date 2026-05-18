@@ -94,7 +94,7 @@ export default function ItemDetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 animate-fade-in-up">
       {/* ヘッダー: 戻るボタンのみ（商品名は本文で大きく表示） */}
       <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-sm border-b border-gray-100">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">

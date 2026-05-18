@@ -27,6 +27,39 @@ button, a {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+/* ── アニメーション ── */
+
+/* カートバッジ: 点数が増えたときのバウンス */
+@keyframes badge-bounce {
+  0%   { transform: scale(1); }
+  35%  { transform: scale(1.45); }
+  65%  { transform: scale(0.85); }
+  100% { transform: scale(1); }
+}
+.animate-badge-bounce {
+  animation: badge-bounce 0.25s ease-out;
+}
+
+/* 合計金額: 変化したときの一瞬フラッシュ */
+@keyframes amount-flash {
+  0%   { opacity: 1;   transform: scale(1); }
+  30%  { opacity: 0.5; transform: scale(1.08); }
+  100% { opacity: 1;   transform: scale(1); }
+}
+.animate-amount-flash {
+  animation: amount-flash 0.2s ease-out;
+  display: inline-block;
+}
+
+/* 詳細ページ: マウント時のフェードイン */
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.18s ease-out;
+}
+
 /* スクロールバースタイル */
 ::-webkit-scrollbar {
   width: 4px;

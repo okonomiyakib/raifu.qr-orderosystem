@@ -52,12 +52,18 @@ export function BottomNav({ onCartToggle, isCartOpen }: BottomNavProps) {
           <div className="relative">
             <span className="text-[22px] leading-none">🛒</span>
             {count > 0 && (
-              <span className="absolute -top-1.5 -right-2 bg-orange-500 text-white text-[9px] font-black rounded-full min-w-[16px] h-4 flex items-center justify-center px-0.5 leading-none">
+              <span
+                key={count}
+                className="absolute -top-1.5 -right-2 bg-orange-500 text-white text-[9px] font-black rounded-full min-w-[16px] h-4 flex items-center justify-center px-0.5 leading-none animate-badge-bounce"
+              >
                 {count > 9 ? "9+" : count}
               </span>
             )}
           </div>
-          <span className="text-[10px] font-bold tabular-nums leading-none">
+          <span
+            key={hasItems ? amount : "empty"}
+            className={`text-[10px] font-bold tabular-nums leading-none${hasItems ? " animate-amount-flash" : ""}`}
+          >
             {hasItems ? `¥${amount.toLocaleString()}` : "カート"}
           </span>
         </button>
