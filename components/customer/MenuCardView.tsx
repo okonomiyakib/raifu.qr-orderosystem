@@ -31,7 +31,7 @@ export function MenuCardView({
 }: MenuCardViewProps) {
   return (
     <div
-      className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden active:scale-95 transition-transform"
+      className="bg-white rounded-xl border border-[#E8E0D5] shadow-[0_2px_8px_rgba(0,0,0,0.07)] overflow-hidden active:scale-95 transition-transform"
       onClick={onClick}
       style={onClick ? { cursor: "pointer" } : undefined}
     >
@@ -74,7 +74,7 @@ export function MenuCardView({
       {/* 商品情報: 価格→名前 の順（高速選択優先） */}
       <div className="p-2.5 flex flex-col gap-1">
         {/* 価格（最優先表示） */}
-        <p className="text-base font-bold text-orange-600 leading-none">
+        <p className="text-base font-bold text-[#B22222] leading-none">
           ¥{amount.toLocaleString()}
           <span className="text-xs text-gray-400 font-normal ml-1">({label})</span>
         </p>
@@ -102,7 +102,7 @@ export function MenuCardView({
             </span>
             <button
               onClick={(e) => { e.stopPropagation(); onUpdateQuantity(cartQuantity + 1); }}
-              className="w-10 h-10 rounded-full bg-orange-500 text-white flex items-center justify-center text-xl font-bold active:scale-90 transition-transform"
+              className="w-10 h-10 rounded-full bg-[#B22222] text-white flex items-center justify-center text-xl font-bold active:scale-90 transition-transform"
               aria-label="増やす"
             >
               ＋
@@ -112,7 +112,7 @@ export function MenuCardView({
           <button
             onClick={(e) => { e.stopPropagation(); onAdd(); }}
             disabled={!item.isAvailable}
-            className="mt-1 w-full py-2.5 bg-orange-500 disabled:bg-gray-300 text-white rounded-lg text-sm font-bold active:scale-95 transition-transform"
+            className="mt-1 w-full py-2.5 bg-[#B22222] disabled:bg-gray-300 text-white rounded-lg text-sm font-bold active:scale-95 transition-transform shadow-sm"
           >
             ＋ 注文
           </button>

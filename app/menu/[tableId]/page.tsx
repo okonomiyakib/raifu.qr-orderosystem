@@ -128,7 +128,7 @@ export default function MenuPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-orange-50">
+      <div className="min-h-screen flex items-center justify-center bg-[#FAFAF6]">
         <div className="text-center">
           <div className="animate-spin text-5xl mb-4">🍽️</div>
           <p className="text-gray-500">メニューを読み込み中...</p>
@@ -138,23 +138,26 @@ export default function MenuPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-24">
-      <header className="sticky top-0 z-40 bg-white shadow-sm">
+    <div className="min-h-screen washi-bg pb-24">
+      <header className="sticky top-0 z-40 bg-white border-b border-[#E8E0D5] shadow-sm">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center justify-between gap-3">
           <div>
-            <h1 className="text-xl font-bold text-gray-800">メニュー</h1>
+            <div className="flex items-center gap-1.5">
+              <span className="text-base leading-none">🥷</span>
+              <h1 className="text-xl font-bold text-gray-900">メニュー</h1>
+            </div>
             {tableNumber && (
-              <p className="text-base text-orange-500 font-semibold">テーブル {tableNumber}</p>
+              <p className="text-base text-[#B22222] font-semibold">テーブル {tableNumber}</p>
             )}
           </div>
           {/* 呼び出しボタン: 誰でも押せる大きさ */}
           <button
             onClick={handleCallStaff}
             disabled={callCooldown || isCalling}
-            className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-5 py-3 rounded-2xl text-sm sm:text-base font-bold transition-all shadow min-h-[52px] flex-shrink-0 ${
+            className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-5 py-3 rounded-xl text-sm sm:text-base font-bold transition-all shadow-sm min-h-[52px] flex-shrink-0 ${
               callCooldown
                 ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                : "bg-orange-500 text-white active:scale-95"
+                : "bg-[#B22222] text-white active:scale-95"
             }`}
           >
             <span className="text-xl">🔔</span>
@@ -162,14 +165,16 @@ export default function MenuPage() {
           </button>
         </div>
 
-        {/* カテゴリタブ: 押しやすい高さ */}
+        {/* カテゴリタブ: 和風タブスタイル */}
         <div className="flex gap-2 px-4 pb-3 overflow-x-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {categories.map((cat) => (
             <button
               key={cat}
               onClick={() => setActiveCategory(cat)}
-              className={`flex-shrink-0 px-5 py-3 rounded-full text-base font-semibold transition-colors min-h-[48px] ${
-                activeCategory === cat ? "bg-orange-500 text-white" : "bg-gray-100 text-gray-700"
+              className={`flex-shrink-0 px-5 py-3 rounded-lg text-base font-semibold transition-colors min-h-[48px] border ${
+                activeCategory === cat
+                  ? "bg-[#B22222] text-white border-[#B22222] shadow-sm"
+                  : "bg-white text-gray-700 border-[#E8E0D5]"
               }`}
             >
               {cat}

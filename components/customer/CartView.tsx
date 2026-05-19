@@ -75,7 +75,7 @@ export function CartView({
                         {item.selectedOptions.map((o) => o.name).join("、")}
                       </p>
                     )}
-                    <p className="text-orange-400 text-sm mt-0.5">
+                    <p className="text-[#C8973D] text-sm mt-0.5 font-semibold">
                       ¥{item.price.toLocaleString()}
                     </p>
                   </div>
@@ -92,7 +92,7 @@ export function CartView({
                     </span>
                     <button
                       onClick={() => onUpdateQuantity(item.itemId, item.quantity + 1)}
-                      className="w-11 h-11 rounded-full bg-orange-500 text-white flex items-center justify-center text-2xl font-bold active:scale-90 transition-all"
+                      className="w-11 h-11 rounded-full bg-[#B22222] text-white flex items-center justify-center text-2xl font-bold active:scale-90 transition-all"
                       aria-label="増やす"
                     >
                       ＋
@@ -106,14 +106,14 @@ export function CartView({
             <div className="px-4 py-4 border-t border-gray-700">
               <div className="flex items-center justify-between mb-3">
                 <span className="text-gray-400 text-sm">税込合計</span>
-                <span className="text-white text-2xl font-bold tabular-nums">
+                <span className="text-[#C8973D] text-2xl font-bold tabular-nums">
                   ¥{totalAmount().toLocaleString()}
                 </span>
               </div>
               <button
                 type="button"
                 onClick={onCheckout}
-                className="w-full py-4 bg-orange-500 text-white rounded-xl text-lg font-bold active:scale-95 transition-transform shadow-lg"
+                className="w-full py-4 bg-[#B22222] text-white rounded-xl text-lg font-bold active:scale-95 transition-transform shadow-lg"
               >
                 注文する
               </button>

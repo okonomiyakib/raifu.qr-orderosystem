@@ -10,7 +10,7 @@ export const metadata = {
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <span className="inline-block text-orange-500 font-bold text-sm tracking-widest uppercase mb-3">
+    <span className="inline-block text-[#B22222] font-bold text-sm tracking-widest uppercase mb-3">
       {children}
     </span>
   );
@@ -31,12 +31,12 @@ export default function LandingPage() {
     <div className="min-h-screen bg-white text-gray-800 font-sans">
 
       {/* ━━━━━━━━━━ HEADER ━━━━━━━━━━ */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
+      <header className="sticky top-0 z-50 bg-[#1A1A3E]/95 backdrop-blur-sm border-b border-[#2A2A5A]">
         <div className="max-w-5xl mx-auto px-5 h-14 flex items-center justify-between">
-          <span className="text-lg font-black text-orange-500">🍽️ QRオーダー</span>
+          <span className="text-lg font-black text-[#C8973D]">🥷 QRオーダー</span>
           <a
             href="#contact"
-            className="px-4 py-2 bg-orange-500 text-white text-sm font-bold rounded-lg active:scale-95 transition-transform"
+            className="px-4 py-2 bg-[#B22222] text-white text-sm font-bold rounded-lg active:scale-95 transition-transform shadow-sm"
           >
             無料で相談する
           </a>
@@ -44,29 +44,34 @@ export default function LandingPage() {
       </header>
 
       {/* ━━━━━━━━━━ HERO ━━━━━━━━━━ */}
-      <section className="bg-gradient-to-br from-orange-50 via-white to-red-50 pt-16 pb-20 px-5">
-        <div className="max-w-3xl mx-auto text-center">
-          <div className="inline-block bg-orange-100 text-orange-600 text-xs font-bold px-3 py-1 rounded-full mb-6 tracking-wide">
-            個人店・小規模飲食店向け
+      <section className="relative bg-[#1A1A3E] pt-16 pb-20 px-5 overflow-hidden">
+        {/* 和風ドット背景（薄く） */}
+        <div className="absolute inset-0 opacity-10" style={{
+          backgroundImage: "radial-gradient(circle, #C8973D 1.5px, transparent 1.5px)",
+          backgroundSize: "24px 24px",
+        }} />
+        <div className="relative max-w-3xl mx-auto text-center">
+          <div className="inline-flex items-center gap-2 bg-[#C8973D]/20 text-[#C8973D] text-xs font-bold px-4 py-1.5 rounded-full mb-6 tracking-wide border border-[#C8973D]/30">
+            <span>🥷</span> 個人店・小規模飲食店向け
           </div>
-          <h1 className="text-3xl sm:text-5xl font-black text-gray-900 leading-tight mb-6">
+          <h1 className="text-3xl sm:text-5xl font-black text-white leading-tight mb-6">
             注文対応の負担を減らし、<br />
-            <span className="text-orange-500">少人数でも回るお店</span>へ
+            <span className="text-[#C8973D]">少人数でも回るお店</span>へ
           </h1>
-          <p className="text-base sm:text-lg text-gray-600 leading-relaxed mb-10 max-w-xl mx-auto">
+          <p className="text-base sm:text-lg text-gray-300 leading-relaxed mb-10 max-w-xl mx-auto">
             QR注文、厨房連携、配膳管理まで。<br />
             個人店向けのシンプルな注文システムです。
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <a
               href="#contact"
-              className="px-8 py-4 bg-orange-500 text-white text-lg font-bold rounded-2xl shadow-lg shadow-orange-200 active:scale-95 transition-transform"
+              className="px-8 py-4 bg-[#B22222] text-white text-lg font-bold rounded-xl shadow-lg active:scale-95 transition-transform"
             >
               無料で相談する →
             </a>
             <a
               href="#flow"
-              className="px-8 py-4 bg-white text-gray-700 text-lg font-bold rounded-2xl border-2 border-gray-200 active:scale-95 transition-transform"
+              className="px-8 py-4 bg-white/10 text-white text-lg font-bold rounded-xl border border-white/20 active:scale-95 transition-transform backdrop-blur-sm"
             >
               導入の流れを見る
             </a>
@@ -211,8 +216,8 @@ export default function LandingPage() {
             {[
               {
                 icon: "🙌",
-                color: "bg-orange-50 border-orange-100",
-                accent: "text-orange-500",
+                color: "bg-red-50 border-red-100",
+                accent: "text-[#B22222]",
                 title: "注文取りの負担が減る",
                 body: "スタッフがテーブルを回る回数が激減。その時間を料理・接客の質向上に使えます。",
               },
@@ -252,7 +257,7 @@ export default function LandingPage() {
       </section>
 
       {/* ━━━━━━━━━━ PRICING ━━━━━━━━━━ */}
-      <section className="bg-orange-50 py-20 px-5">
+      <section className="bg-[#FAFAF6] py-20 px-5">
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-10">
             <SectionLabel>料金</SectionLabel>
@@ -260,23 +265,23 @@ export default function LandingPage() {
               シンプルな料金体系。<br />隠れた費用はありません。
             </SectionTitle>
           </div>
-          <div className="bg-white rounded-3xl shadow-xl overflow-hidden">
+          <div className="bg-white rounded-3xl shadow-xl overflow-hidden border border-[#E8E0D5]">
             {/* プラン名 */}
-            <div className="bg-orange-500 px-8 py-5 text-center">
-              <p className="text-orange-100 text-sm font-bold tracking-wider">スタンダードプラン</p>
-              <p className="text-white text-xs mt-1">個人店・小規模飲食店向け</p>
+            <div className="bg-[#1A1A3E] px-8 py-5 text-center">
+              <p className="text-[#C8973D] text-sm font-bold tracking-wider">スタンダードプラン</p>
+              <p className="text-gray-300 text-xs mt-1">個人店・小規模飲食店向け</p>
             </div>
             {/* 料金 */}
             <div className="px-8 py-8">
               <div className="grid sm:grid-cols-2 gap-6 mb-8">
-                <div className="text-center p-5 bg-gray-50 rounded-2xl">
+                <div className="text-center p-5 bg-gray-50 rounded-2xl border border-[#E8E0D5]">
                   <p className="text-xs text-gray-500 font-semibold mb-1">初期費用</p>
                   <p className="text-4xl font-black text-gray-900">¥30,000</p>
                   <p className="text-xs text-gray-400 mt-1">初期設定サポート込み</p>
                 </div>
-                <div className="text-center p-5 bg-orange-50 rounded-2xl border-2 border-orange-200">
-                  <p className="text-xs text-orange-600 font-semibold mb-1">月額費用</p>
-                  <p className="text-4xl font-black text-orange-600">¥10,000</p>
+                <div className="text-center p-5 bg-red-50 rounded-2xl border-2 border-[#B22222]/30">
+                  <p className="text-xs text-[#B22222] font-semibold mb-1">月額費用</p>
+                  <p className="text-4xl font-black text-[#B22222]">¥10,000</p>
                   <p className="text-xs text-gray-400 mt-1">税込・いつでも解約可</p>
                 </div>
               </div>
@@ -293,14 +298,14 @@ export default function LandingPage() {
                   "操作マニュアル",
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2 text-sm text-gray-700">
-                    <span className="text-orange-500 font-black mt-0.5 flex-shrink-0">✓</span>
+                    <span className="text-[#B22222] font-black mt-0.5 flex-shrink-0">✓</span>
                     {item}
                   </li>
                 ))}
               </ul>
               <a
                 href="#contact"
-                className="block w-full py-4 bg-orange-500 text-white text-center font-bold text-lg rounded-2xl active:scale-95 transition-transform shadow-md shadow-orange-200"
+                className="block w-full py-4 bg-[#B22222] text-white text-center font-bold text-lg rounded-2xl active:scale-95 transition-transform shadow-md"
               >
                 無料で相談する →
               </a>
@@ -355,17 +360,17 @@ export default function LandingPage() {
               <div key={item.step} className="flex gap-4">
                 {/* ステップライン */}
                 <div className="flex flex-col items-center flex-shrink-0">
-                  <div className="w-11 h-11 rounded-full bg-orange-500 text-white flex items-center justify-center font-black text-sm flex-shrink-0">
+                  <div className="w-11 h-11 rounded-full bg-[#1A1A3E] text-[#C8973D] flex items-center justify-center font-black text-sm flex-shrink-0 border border-[#C8973D]/40">
                     {item.step}
                   </div>
-                  {i < 3 && <div className="w-0.5 flex-1 bg-orange-200 my-1" />}
+                  {i < 3 && <div className="w-0.5 flex-1 bg-[#E8E0D5] my-1" />}
                 </div>
                 {/* 内容 */}
                 <div className="pb-6 flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-xl leading-none">{item.icon}</span>
                     <p className="font-black text-gray-900 text-base">{item.title}</p>
-                    <span className="ml-auto text-xs bg-orange-100 text-orange-600 font-bold px-2 py-0.5 rounded-full">
+                    <span className="ml-auto text-xs bg-[#B22222]/10 text-[#B22222] font-bold px-2 py-0.5 rounded-full">
                       {item.duration}
                     </span>
                   </div>
@@ -378,7 +383,7 @@ export default function LandingPage() {
       </section>
 
       {/* ━━━━━━━━━━ FAQ ━━━━━━━━━━ */}
-      <section className="bg-gray-50 py-20 px-5">
+      <section className="bg-[#FAFAF6] py-20 px-5">
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-10">
             <SectionLabel>よくある質問</SectionLabel>
@@ -413,7 +418,7 @@ export default function LandingPage() {
               >
                 <summary className="flex items-center justify-between px-5 py-4 cursor-pointer font-semibold text-gray-800 text-sm list-none">
                   <span>Q. {item.q}</span>
-                  <span className="text-orange-400 font-black text-lg ml-3 flex-shrink-0 group-open:rotate-45 transition-transform">＋</span>
+                  <span className="text-[#B22222] font-black text-lg ml-3 flex-shrink-0 group-open:rotate-45 transition-transform">＋</span>
                 </summary>
                 <div className="px-5 pb-4 text-sm text-gray-600 leading-relaxed border-t border-gray-100 pt-3">
                   {item.a}
@@ -425,13 +430,13 @@ export default function LandingPage() {
       </section>
 
       {/* ━━━━━━━━━━ CONTACT CTA ━━━━━━━━━━ */}
-      <section id="contact" className="bg-gray-900 py-20 px-5">
+      <section id="contact" className="bg-[#1A1A3E] py-20 px-5">
         <div className="max-w-2xl mx-auto text-center">
           <span className="text-4xl block mb-4">📩</span>
           <SectionLabel>お問い合わせ</SectionLabel>
           <h2 className="text-2xl sm:text-3xl font-black text-white mb-4 leading-snug">
             まずは気軽にご相談ください。<br />
-            <span className="text-orange-400">費用は一切かかりません。</span>
+            <span className="text-[#C8973D]">費用は一切かかりません。</span>
           </h2>
           <p className="text-gray-400 text-sm sm:text-base mb-10 leading-relaxed">
             「うちの店に合うかわからない」「もう少し詳しく聞きたい」<br className="hidden sm:block" />
@@ -457,16 +462,16 @@ export default function LandingPage() {
             </a>
           </div>
           <div className="mt-10 grid sm:grid-cols-3 gap-4 text-sm text-gray-400">
-            <div className="bg-gray-800 rounded-xl p-4">
-              <p className="text-white font-bold mb-1">📞 返信速度</p>
+            <div className="bg-[#2A2A5A] rounded-xl p-4 border border-[#3A3A6A]">
+              <p className="text-[#C8973D] font-bold mb-1">📞 返信速度</p>
               <p>原則24時間以内にご返信します</p>
             </div>
-            <div className="bg-gray-800 rounded-xl p-4">
-              <p className="text-white font-bold mb-1">🔒 安心保証</p>
+            <div className="bg-[#2A2A5A] rounded-xl p-4 border border-[#3A3A6A]">
+              <p className="text-[#C8973D] font-bold mb-1">🔒 安心保証</p>
               <p>個人情報は問い合わせ対応のみに使用</p>
             </div>
-            <div className="bg-gray-800 rounded-xl p-4">
-              <p className="text-white font-bold mb-1">🚫 押し売りなし</p>
+            <div className="bg-[#2A2A5A] rounded-xl p-4 border border-[#3A3A6A]">
+              <p className="text-[#C8973D] font-bold mb-1">🚫 押し売りなし</p>
               <p>しつこい営業は一切しません</p>
             </div>
           </div>

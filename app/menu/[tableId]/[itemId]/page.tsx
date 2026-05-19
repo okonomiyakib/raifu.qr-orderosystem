@@ -94,9 +94,9 @@ export default function ItemDetailPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 animate-fade-in-up">
+    <div className="min-h-screen bg-[#FAFAF6] animate-fade-in-up">
       {/* ヘッダー: 戻るボタンのみ（商品名は本文で大きく表示） */}
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-sm border-b border-gray-100">
+      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-sm border-b border-[#E8E0D5]">
         <div className="max-w-lg mx-auto px-4 py-3 flex items-center gap-3">
           <button
             onClick={() => router.back()}
@@ -141,7 +141,7 @@ export default function ItemDetailPage() {
             <h2 className="text-2xl font-black text-gray-900 leading-snug mb-1">
               {item.name}
             </h2>
-            <p className="text-2xl font-bold text-orange-600">
+            <p className="text-2xl font-bold text-[#B22222]">
               ¥{amount.toLocaleString()}
               <span className="text-sm font-normal text-gray-400 ml-1">（{label}）</span>
             </p>
@@ -160,7 +160,7 @@ export default function ItemDetailPage() {
                 <div className="flex items-center gap-2">
                   <span className="text-base font-bold text-gray-800">トッピングを選ぶ</span>
                   {selectedOptions.length > 0 && (
-                    <span className="bg-orange-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                    <span className="bg-[#B22222] text-white text-xs font-bold px-2 py-0.5 rounded-full">
                       {selectedOptions.length}個選択中
                     </span>
                   )}
@@ -175,16 +175,16 @@ export default function ItemDetailPage() {
                   {item.options!.map((opt) => (
                     <label
                       key={opt.id}
-                      className="flex items-center gap-3 py-3 border-b border-gray-50 cursor-pointer active:bg-orange-50 rounded-lg transition-colors last:border-b-0"
+                      className="flex items-center gap-3 py-3 border-b border-[#E8E0D5] cursor-pointer active:bg-red-50 rounded-lg transition-colors last:border-b-0"
                     >
                       <input
                         type="checkbox"
                         checked={isSelected(opt)}
                         onChange={() => handleToggle(opt)}
-                        className="w-5 h-5 accent-orange-500 cursor-pointer flex-shrink-0"
+                        className="w-5 h-5 accent-[#B22222] cursor-pointer flex-shrink-0"
                       />
                       <span className="flex-1 text-base text-gray-700">{opt.name}</span>
-                      <span className="text-sm text-orange-500 font-semibold">
+                      <span className="text-sm text-[#B22222] font-semibold">
                         +¥{opt.price.toLocaleString()}
                       </span>
                     </label>
@@ -195,7 +195,7 @@ export default function ItemDetailPage() {
           )}
 
           {/* 数量 */}
-          <div className="flex items-center justify-between bg-white rounded-2xl px-5 py-4 shadow-sm border border-gray-100">
+          <div className="flex items-center justify-between bg-white rounded-2xl px-5 py-4 shadow-sm border border-[#E8E0D5]">
             <p className="text-base font-bold text-gray-800">数量</p>
             <div className="flex items-center gap-5">
               <button
@@ -210,7 +210,7 @@ export default function ItemDetailPage() {
               </span>
               <button
                 onClick={() => setQuantity((q) => q + 1)}
-                className="w-12 h-12 rounded-full bg-orange-500 text-white flex items-center justify-center text-2xl font-bold active:scale-90 transition-transform"
+                className="w-12 h-12 rounded-full bg-[#B22222] text-white flex items-center justify-center text-2xl font-bold active:scale-90 transition-transform"
                 aria-label="増やす"
               >
                 ＋
@@ -228,7 +228,7 @@ export default function ItemDetailPage() {
               合計
               {quantity > 1 && <span className="ml-1 text-gray-400">（{quantity}個）</span>}
             </span>
-            <span className="text-2xl font-bold text-orange-600">
+            <span className="text-2xl font-bold text-[#B22222]">
               ¥{(amount * quantity).toLocaleString()}
               <span className="text-xs font-normal text-gray-400 ml-1">（{label}）</span>
             </span>
@@ -236,7 +236,7 @@ export default function ItemDetailPage() {
           <button
             onClick={handleAddToCart}
             disabled={!item.isAvailable}
-            className="w-full py-4 bg-orange-500 disabled:bg-gray-300 text-white rounded-2xl text-lg font-bold active:scale-95 transition-transform shadow-md"
+            className="w-full py-4 bg-[#B22222] disabled:bg-gray-300 text-white rounded-2xl text-lg font-bold active:scale-95 transition-transform shadow-md"
           >
             {item.isAvailable ? "カートに追加" : "売り切れ"}
           </button>

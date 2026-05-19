@@ -3,6 +3,20 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+
+  /* CryptoNinja テーマカラー */
+  --cn-red:    #B22222;
+  --cn-navy:   #1A1A3E;
+  --cn-gold:   #C8973D;
+  --cn-warm:   #FAFAF6;
+  --cn-border: #E8E0D5;
+}
+
+/* 和風ドットパターン背景（薄く） */
+.washi-bg {
+  background-color: var(--cn-warm);
+  background-image: radial-gradient(circle, #D8D0C8 1.5px, transparent 1.5px);
+  background-size: 22px 22px;
 }
 
 body {
